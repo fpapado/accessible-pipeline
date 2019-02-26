@@ -7,8 +7,19 @@ import path from 'path';
 import {promisify} from 'util';
 const writeFile = promisify(fs.writeFile);
 
+// TODO: more granular error boundaries, and error reporting
+// for example {..., fetcherErrors: [{url: ..., reason: ...}]}
+// - "Friends don't let friends not handle errors"
+
+// TODO: Redirects seem to throw
+// @example https://fiba3x3.com/ball
+// TODO: consider a followRedirects option
+
 // TODO: Consider batching / parallelism options
 // TODO: Consider AxE reporting verbosity toggle
+// TODO: (Big one) Router path exclusions
+// @example https://fiba3x3.com/docs/*
+// TODO: Ability to set a UA to hide from analytics
 
 // Common options for excluding links to visit
 // For example *.pdf and #heading-link came up often in early iterations
@@ -21,7 +32,7 @@ const DEFAULT_OPTIONS: Partial<Options> = {};
 
 const TEST_OPTIONS = {
   // TODO: Shoold ignoreExtensions allow not having the '.'?
-  ignoreExtensions: ['.pdf'],
+  ignoreExtensions: ['.pdf', '.zip'],
   // TODO: Should we have a way to say "include at least one fragment link"?
   //  I cannot easily imagine a page having only 'example.com#thing' links to it, but it could happen...
   //  or do we just advise folks to add it to roots?
@@ -30,10 +41,11 @@ const TEST_OPTIONS = {
   //  in particular, this is about 'example.com/faq#question and *not* about example.com/#/route
   //  the former is common for linking to headings, the latter is common for some client-side routing
   //  We should specify that we mean the former!
+  // TODO: Actually make it work like that. '#/route' gets picked up atm
   ignoreFragmentLinks: true,
 };
 
-const ENTRY = 'https://fiba3x3.com/';
+const ENTRY = 'https://fiba3x3.com/ball';
 
 async function main(opts?: Options) {
   const options = {...DEFAULT_OPTIONS, ...opts};
@@ -44,7 +56,7 @@ async function main(opts?: Options) {
   // To compensate, we store the string, and transform to/from URL href at the edges
   let PAGES_TO_VISIT = new Set([ENTRY]);
   let RESULTS: Array<AxeResults> = [];
-  const PAGE_LIMIT = 30;
+  const PAGE_LIMIT = 45;
 
   const browser = await puppeteer.launch();
   let run = 0;
@@ -103,7 +115,9 @@ async function processPage(browser: Browser, pageUrl: URL) {
   const page = await browser.newPage();
   await page.setBypassCSP(true);
 
-  await page.goto(pageUrl.href);
+  // TODO: use await setRequestInterception(true) for handling redirects...
+  // TODO: the docs say this disables caching. Does it matter?
+  const response = await page.goto(pageUrl.href);
 
   // Analyse page, get results
   const results: any[] = [];
