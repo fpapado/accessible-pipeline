@@ -1,0 +1,26 @@
+{
+  "name": "accessible-pipeline",
+  "version": "0.0.1",
+  "description": "Acessibility checks in CI, made easy",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/fpapado/accessible-pipeline.git"
+  },
+  "keywords": [
+    "a11y",
+    "accessibility",
+    "ci",
+    "axe",
+    "puppeteer"
+  ],
+  "author": "Fotis Papadogeorgopoulos",
+  "license": "BSD-3-Clause",
+  "bugs": {
+    "url": "https://github.com/fpapado/accessible-pipeline/issues"
+  },
+  "homepage": "https://github.com/fpapado/accessible-pipeline#readme"
+}
