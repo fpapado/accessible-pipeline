@@ -25,5 +25,8 @@
   "homepage": "https://github.com/fpapado/accessible-pipeline#readme",
   "dependencies": {
     "axe-puppeteer": "^1.0.0"
+  },
+  "devDependencies": {
+    "prettier": "^1.16.4"
   }
 }
