@@ -7,6 +7,9 @@ import path from 'path';
 import {promisify} from 'util';
 const writeFile = promisify(fs.writeFile);
 
+// TODO: Consider batching / parallelism options
+// TODO: Consider AxE reporting verbosity toggle
+
 // Common options for excluding links to visit
 // For example *.pdf and #heading-link came up often in early iterations
 type Options = {
@@ -41,7 +44,7 @@ async function main(opts?: Options) {
   // To compensate, we store the string, and transform to/from URL href at the edges
   let PAGES_TO_VISIT = new Set([ENTRY]);
   let RESULTS: Array<AxeResults> = [];
-  const PAGE_LIMIT = 20;
+  const PAGE_LIMIT = 30;
 
   const browser = await puppeteer.launch();
   let run = 0;
@@ -58,8 +61,9 @@ async function main(opts?: Options) {
       const pageUrl = new URL(pageHref);
 
       console.log('Will check', pageUrl.href);
-      // Add to pages visited
+      // Add to pages visited, remove from queue
       PAGES_VISITED.add(pageUrl.href);
+      PAGES_TO_VISIT.delete(pageUrl.href);
 
       // Process the page, get results
       const {results, nextPages} = await processPage(browser, pageUrl);
