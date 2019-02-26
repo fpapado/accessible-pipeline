@@ -22,5 +22,8 @@
   "bugs": {
     "url": "https://github.com/fpapado/accessible-pipeline/issues"
   },
-  "homepage": "https://github.com/fpapado/accessible-pipeline#readme"
+  "homepage": "https://github.com/fpapado/accessible-pipeline#readme",
+  "dependencies": {
+    "axe-puppeteer": "^1.0.0"
+  }
 }
