@@ -1,0 +1,16 @@
+{
+  "compilerOptions": {
+    "module": "commonjs",
+    "target": "es2018",
+    "declaration": true,
+    "sourceMap": true,
+    "allowJs": false,
+    "strict": true,
+    "moduleResolution": "node",
+    "allowSyntheticDefaultImports": true,
+    "esModuleInterop": true,
+    "lib": ["dom", "es2018"],
+    "baseUrl": "./"
+  },
+  "exclude": ["node_modules", "dist"]
+}
