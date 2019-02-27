@@ -45,7 +45,7 @@ const TEST_OPTIONS = {
   ignoreFragmentLinks: true,
 };
 
-const ENTRY = 'https://fiba3x3.com/ball';
+const ENTRY = 'https://fiba3x3.com/';
 
 async function main(opts?: Options) {
   const options = {...DEFAULT_OPTIONS, ...opts};
@@ -56,7 +56,9 @@ async function main(opts?: Options) {
   // To compensate, we store the string, and transform to/from URL href at the edges
   let PAGES_TO_VISIT = new Set([ENTRY]);
   let RESULTS: Array<AxeResults> = [];
-  const PAGE_LIMIT = 45;
+  const PAGE_LIMIT = 20;
+
+  console.log('Will run with:', {...options, PAGE_LIMIT});
 
   const browser = await puppeteer.launch();
   let run = 0;
@@ -91,6 +93,7 @@ async function main(opts?: Options) {
       pagesToVisit.forEach(page => PAGES_TO_VISIT.add(page.href));
 
       // TODO: Format the results here somehow?
+      // TODO: Output to TAP, so that we can transform/format with more standard tools
       // Alternative, after everything is gathered, run a reportResults(results)
       // console.log('Results', RESULTS);
       // console.log('Next pages', pagesToVisit);
