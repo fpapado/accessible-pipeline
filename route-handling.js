@@ -1,5 +1,7 @@
 const matchit = require('matchit');
 
+// Exploring route handling
+
 const manifest = [
   '/:season',
   '/:season/teams',

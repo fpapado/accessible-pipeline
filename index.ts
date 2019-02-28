@@ -11,10 +11,6 @@ const writeFile = promisify(fs.writeFile);
 // for example {..., fetcherErrors: [{url: ..., reason: ...}]}
 // - "Friends don't let friends not handle errors"
 
-// TODO: Redirects seem to throw
-// @example https://fiba3x3.com/ball
-// TODO: consider a followRedirects option
-
 // TODO: Consider batching / parallelism options
 // TODO: Consider AxE reporting verbosity toggle
 // TODO: (Big one) Router path exclusions
@@ -118,9 +114,9 @@ async function processPage(browser: Browser, pageUrl: URL) {
   const page = await browser.newPage();
   await page.setBypassCSP(true);
 
-  // TODO: use await setRequestInterception(true) for handling redirects...
-  // TODO: the docs say this disables caching. Does it matter?
-  const response = await page.goto(pageUrl.href);
+  // Use 'networkidle2' to allow time for http-equiv redirects etc.
+  const response = await page.goto(pageUrl.href, {waitUntil: 'networkidle2'});
+  console.log(pageUrl.href);
 
   // Analyse page, get results
   const results: any[] = [];
