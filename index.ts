@@ -98,7 +98,7 @@ async function main(opts?: Options) {
   // TODO: Consider Depth-First Search vs. Breadth-First Search
   for (const pageHref of PAGES_TO_VISIT) {
     // Double check that the page has not been visited (might come into play for concurrency)
-    const shouldRun = shouldProcess(
+    const {shouldProcess: shouldRun, reason} = shouldProcess(
       ROUTE_MANIFEST,
       ROUTES_VISITED,
       PAGES_VISITED,
@@ -107,7 +107,7 @@ async function main(opts?: Options) {
       pageHref
     );
 
-    log.info(`Should process: ${shouldRun}`);
+    log.info(`Should process: ${shouldRun}, reason: ${reason.type}`);
 
     if (shouldRun) {
       run++;
@@ -234,6 +234,25 @@ function getPagesToVisit(
     });
 }
 
+type ProcessDecision = {
+  shouldProcess: boolean;
+  reason: ProcessReason;
+};
+
+type ProcessReason =
+  | {type: 'PageLimit'}
+  | {type: 'Verbatim'; href: string}
+  | {type: 'Route'; route: string};
+
+const ReasonPageLimit = (): ProcessReason => ({type: 'PageLimit'});
+
+const ReasonVerbatim = (href: string): ProcessReason => ({
+  type: 'Verbatim',
+  href,
+});
+
+const ReasonRoute = (route: string): ProcessReason => ({type: 'Route', route});
+
 /** Decide whether a pageHref should be visited */
 function shouldProcess(
   ROUTE_MANIFEST: Array<string>,
@@ -242,11 +261,11 @@ function shouldProcess(
   PAGE_LIMIT: number,
   run: number,
   pageHref: string
-) {
+): ProcessDecision {
   // TODO: Also add things to the relevant _VISITED page!
   if (run > PAGE_LIMIT) {
     log.debug('Page limit reached');
-    return false;
+    return {shouldProcess: false, reason: ReasonPageLimit()};
   } else {
     // If the route manifest is specified, consider the route
     if (ROUTE_MANIFEST) {
@@ -258,16 +277,25 @@ function shouldProcess(
         // If the page matches one of the routes specified, then check if visited
         const {old: matchedRoute} = routeMatch[0];
         log.debug('Route matches, will check if visited');
-        return !ROUTES_VISITED.has(matchedRoute);
+        return {
+          shouldProcess: !ROUTES_VISITED.has(matchedRoute),
+          reason: ReasonRoute(matchedRoute),
+        };
       } else {
         // If no match, then consider the verbatim version
         log.debug('No route matches, will check verbatim');
-        return !PAGES_VISITED.has(pageHref);
+        return {
+          shouldProcess: !PAGES_VISITED.has(pageHref),
+          reason: ReasonVerbatim(pageHref),
+        };
       }
     } else {
       // If no manifest, then consider the verbatim version
       log.debug('No manifest, will check verbatim');
-      return !PAGES_VISITED.has(pageHref);
+      return {
+        shouldProcess: !PAGES_VISITED.has(pageHref),
+        reason: ReasonVerbatim(pageHref),
+      };
     }
   }
 }
