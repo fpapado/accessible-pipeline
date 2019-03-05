@@ -6,6 +6,7 @@ import fs from 'fs';
 import path from 'path';
 import {promisify} from 'util';
 import {logger} from './logger';
+import matchit from 'matchit';
 
 // Create a child logger scoped to the module
 const log = logger.child({module: 'root'});
@@ -67,7 +68,9 @@ async function main(opts?: Options) {
   if (options.routeManifestPath) {
     // Read the manifest specified
     try {
-      ROUTE_MANIFEST = await readFile(options.routeManifestPath, 'utf8');
+      ROUTE_MANIFEST = await readFile(options.routeManifestPath, 'utf8').then(
+        data => JSON.parse(data)
+      );
     } catch (err) {
       log.error('There was an error when trying to read the route manifest');
       throw err;
@@ -84,9 +87,9 @@ async function main(opts?: Options) {
   // To compensate, we store the string, and transform to/from URL href at the edges
   let PAGES_TO_VISIT = new Set([ENTRY]);
   let RESULTS: Array<AxeResults> = [];
-  const PAGE_LIMIT = 20;
+  const PAGE_LIMIT = 5;
 
-  console.info('Will run with:', {...options, PAGE_LIMIT});
+  log.info('Will run with:', {...options, PAGE_LIMIT});
 
   const browser = await puppeteer.launch();
   let run = 0;
@@ -94,37 +97,19 @@ async function main(opts?: Options) {
   // TODO: Maybe we need a while here
   // TODO: Consider Depth-First Search vs. Breadth-First Search
   for (const pageHref of PAGES_TO_VISIT) {
-    /*
-    const shouldProcess = (
+    // Double check that the page has not been visited (might come into play for concurrency)
+    const shouldRun = shouldProcess(
       ROUTE_MANIFEST,
       ROUTES_VISITED,
       PAGES_VISITED,
       PAGE_LIMIT,
-      run
-    ) => {
-      if (run < PAGE_LIMIT) {
-        return false;
-      } else {
-        // If the route manifest is specified, consider the route
-        if (ROUTE_MANIFEST) {
-          // If the route matches those specified, then check if visited
-          const routeMatch = todo();
-          if (routeMatch) {
-            return !ROUTES_VISITED.has(routeMatch);
-          } else {
-            // If no match, then consider the verbatim version
-            return !PAGES_VISITED.has(pageHref);
-          }
-        } else {
-          // If no url, then consider the verbatim version
-          return !PAGES_VISITED.has(pageHref);
-        }
-      }
-    };
-    */
+      run,
+      pageHref
+    );
 
-    // Double check that the page has not been visited (might come into play for concurrency)
-    if (run < PAGE_LIMIT && !PAGES_VISITED.has(pageHref)) {
+    log.info(`Should process: ${shouldRun}`);
+
+    if (shouldRun) {
       run++;
       log.trace('Run', run);
 
@@ -132,7 +117,9 @@ async function main(opts?: Options) {
       const pageUrl = new URL(pageHref);
 
       log.info('Will check', pageUrl.href);
+
       // Add to pages visited, remove from queue
+      // TODO: Add to ROUTES_VISITED as well if shouldRun.reason === 'Route' && shouldRun.reason.data
       PAGES_VISITED.add(pageUrl.href);
       PAGES_TO_VISIT.delete(pageUrl.href);
 
@@ -152,8 +139,8 @@ async function main(opts?: Options) {
       // TODO: Format the results here somehow?
       // TODO: Output to TAP, so that we can transform/format with more standard tools
       // Alternative, after everything is gathered, run a reportResults(results)
-      // console.log('Results', RESULTS);
-      // console.log('Next pages', pagesToVisit);
+      // log.log('Results', RESULTS);
+      // log.log('Next pages', pagesToVisit);
     }
   }
 
@@ -245,6 +232,44 @@ function getPagesToVisit(
       // Pass through otherwise
       return true;
     });
+}
+
+/** Decide whether a pageHref should be visited */
+function shouldProcess(
+  ROUTE_MANIFEST: Array<string>,
+  ROUTES_VISITED: Set<string>,
+  PAGES_VISITED: Set<string>,
+  PAGE_LIMIT: number,
+  run: number,
+  pageHref: string
+) {
+  // TODO: Also add things to the relevant _VISITED page!
+  if (run > PAGE_LIMIT) {
+    log.debug('Page limit reached');
+    return false;
+  } else {
+    // If the route manifest is specified, consider the route
+    if (ROUTE_MANIFEST) {
+      const routes = ROUTE_MANIFEST.map(matchit.parse);
+      const matchesRoute = (str: string) => matchit.match(str, routes);
+      const routeMatch = matchesRoute(pageHref);
+
+      if (routeMatch.length) {
+        // If the page matches one of the routes specified, then check if visited
+        const {old: matchedRoute} = routeMatch[0];
+        log.debug('Route matches, will check if visited');
+        return !ROUTES_VISITED.has(matchedRoute);
+      } else {
+        // If no match, then consider the verbatim version
+        log.debug('No route matches, will check verbatim');
+        return !PAGES_VISITED.has(pageHref);
+      }
+    } else {
+      // If no manifest, then consider the verbatim version
+      log.debug('No manifest, will check verbatim');
+      return !PAGES_VISITED.has(pageHref);
+    }
+  }
 }
 
 main(TEST_OPTIONS).catch(err => {

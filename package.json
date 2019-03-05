@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "single": "TS_NODE_PRETTY=true ts-node index.ts",
+    "single": "LOG_LEVEL=trace TS_NODE_PRETTY=true ts-node index.ts",
     "watch": "tsc --watch --pretty"
   },
   "repository": {
