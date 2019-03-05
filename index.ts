@@ -5,10 +5,15 @@ import cheerio from 'cheerio';
 import fs from 'fs';
 import path from 'path';
 import {promisify} from 'util';
+import {logger} from './logger';
+
+// Create a child logger scoped to the module
+const log = logger.child({module: 'root'});
+
+// Promise-friendly core fns
 const writeFile = promisify(fs.writeFile);
 const readFile = promisify(fs.readFile);
 
-// TODO: Use debug() and verbosity levels
 // TODO: Source-map-support
 
 // TODO: more granular error boundaries, and error reporting
@@ -16,6 +21,7 @@ const readFile = promisify(fs.readFile);
 // - "Friends don't let friends not handle errors"
 
 // TODO: Consider batching / parallelism options
+// TODO: Use batching for resilience
 // TODO: Consider AxE reporting verbosity toggle
 // TODO: (Big one) Router path exclusions
 // @example https://fiba3x3.com/docs/*
@@ -63,12 +69,10 @@ async function main(opts?: Options) {
     try {
       ROUTE_MANIFEST = await readFile(options.routeManifestPath, 'utf8');
     } catch (err) {
-      console.error(
-        'There was an error when trying to read the route manifest'
-      );
+      log.error('There was an error when trying to read the route manifest');
       throw err;
     }
-    console.log('Read manifest!');
+    log.info('Read manifest!');
     // TODO: Validate the format
   }
 
@@ -82,7 +86,7 @@ async function main(opts?: Options) {
   let RESULTS: Array<AxeResults> = [];
   const PAGE_LIMIT = 20;
 
-  console.log('Will run with:', {...options, PAGE_LIMIT});
+  console.info('Will run with:', {...options, PAGE_LIMIT});
 
   const browser = await puppeteer.launch();
   let run = 0;
@@ -90,6 +94,7 @@ async function main(opts?: Options) {
   // TODO: Maybe we need a while here
   // TODO: Consider Depth-First Search vs. Breadth-First Search
   for (const pageHref of PAGES_TO_VISIT) {
+    /*
     const shouldProcess = (
       ROUTE_MANIFEST,
       ROUTES_VISITED,
@@ -116,23 +121,24 @@ async function main(opts?: Options) {
         }
       }
     };
+    */
 
     // Double check that the page has not been visited (might come into play for concurrency)
     if (run < PAGE_LIMIT && !PAGES_VISITED.has(pageHref)) {
       run++;
-      console.log('Run', run);
+      log.trace('Run', run);
 
       // First, convert to a URL (if we have gotten this from the scripts below, this is OK)
       const pageUrl = new URL(pageHref);
 
-      console.log('Will check', pageUrl.href);
+      log.info('Will check', pageUrl.href);
       // Add to pages visited, remove from queue
       PAGES_VISITED.add(pageUrl.href);
       PAGES_TO_VISIT.delete(pageUrl.href);
 
       // Process the page, get results
       const {results, nextPages} = await processPage(browser, pageUrl);
-      console.log('Got results');
+      log.info('Got results');
 
       // Append the results to the list
       // RESULTS = RESULTS.concat(results);
@@ -155,14 +161,14 @@ async function main(opts?: Options) {
   await browser.close();
 
   await writeFile('report.json', JSON.stringify(RESULTS, null, 2), 'utf8');
-  console.log('Wrote report.json');
+  log.info('Wrote report.json');
 
   await writeFile(
     'queue.json',
     JSON.stringify(Array.from(PAGES_TO_VISIT.values()), null, 2),
     'utf8'
   );
-  console.log('Wrote queue.json for remaining urls');
+  log.info('Wrote queue.json for remaining urls');
 }
 
 async function processPage(browser: Browser, pageUrl: URL) {
@@ -171,7 +177,7 @@ async function processPage(browser: Browser, pageUrl: URL) {
 
   // Use 'networkidle2' to allow time for http-equiv redirects etc.
   const response = await page.goto(pageUrl.href, {waitUntil: 'networkidle2'});
-  console.log(pageUrl.href);
+  log.info(pageUrl.href);
 
   // Analyse page, get results
   const results: any[] = [];
@@ -243,6 +249,6 @@ function getPagesToVisit(
 
 main(TEST_OPTIONS).catch(err => {
   // TODO: Consider other ways of reporting errors here
-  console.error('The process encountered an unrecoverable error: ', err);
+  log.error('The process encountered an unrecoverable error: ', err);
   process.exit(1);
 });
