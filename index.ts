@@ -7,6 +7,8 @@ import path from 'path';
 import {promisify} from 'util';
 import {logger} from './logger';
 import matchit from 'matchit';
+import {runInThisContext} from 'vm';
+import {LOG_VERSION} from 'pino';
 
 // Create a child logger scoped to the module
 const log = logger.child({module: 'root'});
@@ -119,9 +121,13 @@ async function main(opts?: Options) {
       log.info('Will check', pageUrl.href);
 
       // Add to pages visited, remove from queue
-      // TODO: Add to ROUTES_VISITED as well if shouldRun.reason === 'Route' && shouldRun.reason.data
       PAGES_VISITED.add(pageUrl.href);
       PAGES_TO_VISIT.delete(pageUrl.href);
+
+      // If the reason we selected a page was because of a route, then add that route to the visited set
+      if (reason.type === 'Route') {
+        ROUTES_VISITED.add(reason.route);
+      }
 
       // Process the page, get results
       const {results, nextPages} = await processPage(browser, pageUrl);
@@ -155,7 +161,15 @@ async function main(opts?: Options) {
     JSON.stringify(Array.from(PAGES_TO_VISIT.values()), null, 2),
     'utf8'
   );
+
   log.info('Wrote queue.json for remaining urls');
+
+  log.debug(
+    `Visited pages: ${JSON.stringify(Array.from(PAGES_VISITED.keys()))}`
+  );
+  log.debug(
+    `Visited routes: ${JSON.stringify(Array.from(ROUTES_VISITED.keys()))}`
+  );
 }
 
 async function processPage(browser: Browser, pageUrl: URL) {
