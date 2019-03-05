@@ -6,6 +6,10 @@ import fs from 'fs';
 import path from 'path';
 import {promisify} from 'util';
 const writeFile = promisify(fs.writeFile);
+const readFile = promisify(fs.readFile);
+
+// TODO: Use debug() and verbosity levels
+// TODO: Source-map-support
 
 // TODO: more granular error boundaries, and error reporting
 // for example {..., fetcherErrors: [{url: ..., reason: ...}]}
@@ -20,13 +24,15 @@ const writeFile = promisify(fs.writeFile);
 // Common options for excluding links to visit
 // For example *.pdf and #heading-link came up often in early iterations
 type Options = {
+  // TODO: entry: string | Array<string>
   ignoreFragmentLinks?: boolean;
   ignoreExtensions?: Array<string>;
+  routeManifestPath?: string;
 };
 
 const DEFAULT_OPTIONS: Partial<Options> = {};
 
-const TEST_OPTIONS = {
+const TEST_OPTIONS: Options = {
   // TODO: Shoold ignoreExtensions allow not having the '.'?
   ignoreExtensions: ['.pdf', '.zip'],
   // TODO: Should we have a way to say "include at least one fragment link"?
@@ -37,8 +43,10 @@ const TEST_OPTIONS = {
   //  in particular, this is about 'example.com/faq#question and *not* about example.com/#/route
   //  the former is common for linking to headings, the latter is common for some client-side routing
   //  We should specify that we mean the former!
-  // TODO: Actually make it work like that. '#/route' gets picked up atm
+  // TODO: Actually make it work like that. '#/route' gets picked up atm...
   ignoreFragmentLinks: true,
+
+  routeManifestPath: 'routes.json',
 };
 
 const ENTRY = 'https://fiba3x3.com/';
@@ -46,7 +54,27 @@ const ENTRY = 'https://fiba3x3.com/';
 async function main(opts?: Options) {
   const options = {...DEFAULT_OPTIONS, ...opts};
 
+  // Load RouteManifest, if specified
+  // TODO: Consider a union for this
+  const MANIFEST_SPECIFIED = !!options.routeManifestPath;
+  let ROUTE_MANIFEST;
+  if (options.routeManifestPath) {
+    // Read the manifest specified
+    try {
+      ROUTE_MANIFEST = await readFile(options.routeManifestPath, 'utf8');
+    } catch (err) {
+      console.error(
+        'There was an error when trying to read the route manifest'
+      );
+      throw err;
+    }
+    console.log('Read manifest!');
+    // TODO: Validate the format
+  }
+
   const PAGES_VISITED = new Set<string>();
+  const ROUTES_VISITED = new Set<string>();
+
   // It is preferable to store a string in the set, otherwise identities get jumbled with objects...
   // Wish there was a good hashed set implementation
   // To compensate, we store the string, and transform to/from URL href at the edges
@@ -62,6 +90,33 @@ async function main(opts?: Options) {
   // TODO: Maybe we need a while here
   // TODO: Consider Depth-First Search vs. Breadth-First Search
   for (const pageHref of PAGES_TO_VISIT) {
+    const shouldProcess = (
+      ROUTE_MANIFEST,
+      ROUTES_VISITED,
+      PAGES_VISITED,
+      PAGE_LIMIT,
+      run
+    ) => {
+      if (run < PAGE_LIMIT) {
+        return false;
+      } else {
+        // If the route manifest is specified, consider the route
+        if (ROUTE_MANIFEST) {
+          // If the route matches those specified, then check if visited
+          const routeMatch = todo();
+          if (routeMatch) {
+            return !ROUTES_VISITED.has(routeMatch);
+          } else {
+            // If no match, then consider the verbatim version
+            return !PAGES_VISITED.has(pageHref);
+          }
+        } else {
+          // If no url, then consider the verbatim version
+          return !PAGES_VISITED.has(pageHref);
+        }
+      }
+    };
+
     // Double check that the page has not been visited (might come into play for concurrency)
     if (run < PAGE_LIMIT && !PAGES_VISITED.has(pageHref)) {
       run++;
@@ -186,4 +241,8 @@ function getPagesToVisit(
     });
 }
 
-main(TEST_OPTIONS);
+main(TEST_OPTIONS).catch(err => {
+  // TODO: Consider other ways of reporting errors here
+  console.error('The process encountered an unrecoverable error: ', err);
+  process.exit(1);
+});

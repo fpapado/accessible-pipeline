@@ -1,0 +1,4 @@
+[
+  "/:season/",
+  "/:season/:eventId"
+]
