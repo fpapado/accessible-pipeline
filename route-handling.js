@@ -12,6 +12,7 @@ const manifest = [
 const hrefs = [
   '/2018',
   '/2018/saskatoon',
+  '/2018/debrecen',
   '/2018/saskatoon/games',
   '/2018/teams',
   '/2018/saskatoon/forgot-this-route',

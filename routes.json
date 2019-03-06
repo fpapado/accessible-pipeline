@@ -1,4 +1,1 @@
-[
-  "/:season/",
-  "/:season/:eventId"
-]
+["/:season", "/:season/:eventId"]

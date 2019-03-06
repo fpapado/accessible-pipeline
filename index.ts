@@ -7,8 +7,6 @@ import path from 'path';
 import {promisify} from 'util';
 import {logger} from './logger';
 import matchit from 'matchit';
-import {runInThisContext} from 'vm';
-import {LOG_VERSION} from 'pino';
 
 // Create a child logger scoped to the module
 const log = logger.child({module: 'root'});
@@ -58,7 +56,7 @@ const TEST_OPTIONS: Options = {
   routeManifestPath: 'routes.json',
 };
 
-const ENTRY = 'https://fiba3x3.com/';
+const ENTRY = 'https://worldtour.fiba3x3.com/2019';
 
 async function main(opts?: Options) {
   const options = {...DEFAULT_OPTIONS, ...opts};
@@ -78,6 +76,7 @@ async function main(opts?: Options) {
       throw err;
     }
     log.info('Read manifest!');
+    log.debug(JSON.stringify(ROUTE_MANIFEST, null, 2));
     // TODO: Validate the format
   }
 
@@ -89,7 +88,7 @@ async function main(opts?: Options) {
   // To compensate, we store the string, and transform to/from URL href at the edges
   let PAGES_TO_VISIT = new Set([ENTRY]);
   let RESULTS: Array<AxeResults> = [];
-  const PAGE_LIMIT = 5;
+  const PAGE_LIMIT = 20;
 
   log.info('Will run with:', {...options, PAGE_LIMIT});
 
@@ -99,6 +98,9 @@ async function main(opts?: Options) {
   // TODO: Maybe we need a while here
   // TODO: Consider Depth-First Search vs. Breadth-First Search
   for (const pageHref of PAGES_TO_VISIT) {
+    // First, convert to a URL (if we have gotten this from the scripts below, this is OK)
+    const pageUrl = new URL(pageHref);
+
     // Double check that the page has not been visited (might come into play for concurrency)
     const {shouldProcess: shouldRun, reason} = shouldProcess(
       ROUTE_MANIFEST,
@@ -106,7 +108,7 @@ async function main(opts?: Options) {
       PAGES_VISITED,
       PAGE_LIMIT,
       run,
-      pageHref
+      pageUrl
     );
 
     log.info(`Should process: ${shouldRun}, reason: ${reason.type}`);
@@ -114,9 +116,6 @@ async function main(opts?: Options) {
     if (shouldRun) {
       run++;
       log.trace('Run', run);
-
-      // First, convert to a URL (if we have gotten this from the scripts below, this is OK)
-      const pageUrl = new URL(pageHref);
 
       log.info('Will check', pageUrl.href);
 
@@ -130,11 +129,26 @@ async function main(opts?: Options) {
       }
 
       // Process the page, get results
-      const {results, nextPages} = await processPage(browser, pageUrl);
-      log.info('Got results');
+      log.info('Will process page');
+
+      let results: Array<AxeResults>;
+      let nextPages: Array<URL>;
+      // let tryCount;
+
+      try {
+        const processResults = await processPage(browser, pageUrl);
+        results = [processResults.results];
+        nextPages = processResults.nextPages;
+        log.info('Processed page OK');
+      } catch (err) {
+        // TODO: Retry here
+        log.error('There was an error processing the page', err);
+        results = [];
+        nextPages = [];
+      }
 
       // Append the results to the list
-      // RESULTS = RESULTS.concat(results);
+      RESULTS = RESULTS.concat(results);
 
       // Remove any visited pages, and add the rest to the ones to visit
       const pagesToVisit = getPagesToVisit(nextPages, PAGES_VISITED, options);
@@ -181,7 +195,7 @@ async function processPage(browser: Browser, pageUrl: URL) {
   log.info(pageUrl.href);
 
   // Analyse page, get results
-  const results: any[] = [];
+  const results: any = [];
   // const results = await analysePage(page);
 
   // Gather next links
@@ -274,10 +288,10 @@ function shouldProcess(
   PAGES_VISITED: Set<string>,
   PAGE_LIMIT: number,
   run: number,
-  pageHref: string
+  pageUrl: URL
 ): ProcessDecision {
   // TODO: Also add things to the relevant _VISITED page!
-  if (run > PAGE_LIMIT) {
+  if (run >= PAGE_LIMIT) {
     log.debug('Page limit reached');
     return {shouldProcess: false, reason: ReasonPageLimit()};
   } else {
@@ -285,7 +299,8 @@ function shouldProcess(
     if (ROUTE_MANIFEST) {
       const routes = ROUTE_MANIFEST.map(matchit.parse);
       const matchesRoute = (str: string) => matchit.match(str, routes);
-      const routeMatch = matchesRoute(pageHref);
+      const routeMatch = matchesRoute(pageUrl.pathname);
+      log.trace(pageUrl.pathname, routeMatch.length);
 
       if (routeMatch.length) {
         // If the page matches one of the routes specified, then check if visited
@@ -299,16 +314,16 @@ function shouldProcess(
         // If no match, then consider the verbatim version
         log.debug('No route matches, will check verbatim');
         return {
-          shouldProcess: !PAGES_VISITED.has(pageHref),
-          reason: ReasonVerbatim(pageHref),
+          shouldProcess: !PAGES_VISITED.has(pageUrl.href),
+          reason: ReasonVerbatim(pageUrl.href),
         };
       }
     } else {
       // If no manifest, then consider the verbatim version
       log.debug('No manifest, will check verbatim');
       return {
-        shouldProcess: !PAGES_VISITED.has(pageHref),
-        reason: ReasonVerbatim(pageHref),
+        shouldProcess: !PAGES_VISITED.has(pageUrl.href),
+        reason: ReasonVerbatim(pageUrl.href),
       };
     }
   }
