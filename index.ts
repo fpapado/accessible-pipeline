@@ -168,26 +168,34 @@ async function main(opts?: Options) {
     }
   }
 
-  // Close the browser and write reports
+  // Close the browser and write reports and state
   await browser.close();
 
-  await writeFile('report.json', JSON.stringify(RESULTS, null, 2), 'utf8');
-  log.info('Wrote report.json');
+  // Some sort of id for the run
+  const runId = Date.now();
 
   await writeFile(
-    'queue.json',
-    JSON.stringify(Array.from(PAGES_TO_VISIT.values()), null, 2),
+    `report-${runId}.json`,
+    JSON.stringify(RESULTS, null, 2),
     'utf8'
   );
+  log.info('Wrote report.json');
 
-  log.info('Wrote queue.json for remaining urls');
+  const stateObj = {
+    entry: ENTRY,
+    options: options,
+    run: run,
+    pagesVisited: Array.from(PAGES_VISITED.keys()),
+    routesVisited: Array.from(ROUTES_VISITED.keys()),
+    toVisit: Array.from(PAGES_TO_VISIT.keys()),
+  };
 
-  log.debug(
-    `Visited pages: ${JSON.stringify(Array.from(PAGES_VISITED.keys()))}`
+  await writeFile(
+    `state-${runId}.json`,
+    JSON.stringify(stateObj, null, 2),
+    'utf8'
   );
-  log.debug(
-    `Visited routes: ${JSON.stringify(Array.from(ROUTES_VISITED.keys()))}`
-  );
+  log.info('Wrote state.json');
 }
 
 async function processPage(browser: Browser, pageUrl: URL) {
@@ -199,8 +207,7 @@ async function processPage(browser: Browser, pageUrl: URL) {
   log.info(pageUrl.href);
 
   // Analyse page, get results
-  const results: any = [];
-  // const results = await analysePage(page);
+  const results = await analysePage(page);
 
   // Gather next links
   // TODO: Consider not de-duplicating here, and returning all to the parent to decide

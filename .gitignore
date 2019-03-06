@@ -4,3 +4,5 @@ dist/
 .vscode/
 queue.json
 report.json
+report-*.json
+state-*.json
