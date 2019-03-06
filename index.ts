@@ -92,7 +92,7 @@ async function main(opts?: Options) {
   // To compensate, we store the string, and transform to/from URL href at the edges
   let PAGES_TO_VISIT = new Set([ENTRY]);
   let RESULTS: Array<AxeResults> = [];
-  const PAGE_LIMIT = 20;
+  const PAGE_LIMIT = 30;
 
   log.info('Will run with:', {...options, PAGE_LIMIT});
 
@@ -173,13 +173,11 @@ async function main(opts?: Options) {
 
   // Some sort of id for the run
   const runId = Date.now();
+  const reportFileName = `report-${runId}.json`;
+  const stateFileName = `state-${runId}.json`;
 
-  await writeFile(
-    `report-${runId}.json`,
-    JSON.stringify(RESULTS, null, 2),
-    'utf8'
-  );
-  log.info('Wrote report.json');
+  await writeFile(reportFileName, JSON.stringify(RESULTS, null, 2), 'utf8');
+  log.info(`Wrote ${reportFileName}`);
 
   const stateObj = {
     entry: ENTRY,
@@ -190,12 +188,8 @@ async function main(opts?: Options) {
     toVisit: Array.from(PAGES_TO_VISIT.keys()),
   };
 
-  await writeFile(
-    `state-${runId}.json`,
-    JSON.stringify(stateObj, null, 2),
-    'utf8'
-  );
-  log.info('Wrote state.json');
+  await writeFile(stateFileName, JSON.stringify(stateObj, null, 2), 'utf8');
+  log.info(`Wrote ${stateFileName}`);
 }
 
 async function processPage(browser: Browser, pageUrl: URL) {
@@ -247,11 +241,9 @@ function getPagesToVisit(
   options: Options
 ) {
   // TODO: We could some fancy things here, such as:
-  //  - checking a route matching
   //  - having a maximumDepth counter
   //  - some other metric / heuristic?
 
-  // For now, follow verbatim
   return urls
     .filter(url => !visited.has(url.href))
     .filter(url => {

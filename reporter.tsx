@@ -11,6 +11,8 @@ type ReporterProps = {reportData: AxeResults[]};
 
 const Reporter: React.FunctionComponent<ReporterProps> = props => {
   const {reportData} = props;
+  const pagesPassed = reportData.filter(res => res.violations.length == 0)
+    .length;
 
   return (
     <Box flexDirection="column">
@@ -48,6 +50,13 @@ const Reporter: React.FunctionComponent<ReporterProps> = props => {
           </Box>
         </Box>
       ))}
+      <Box>
+        <Text>Pages:</Text>{' '}
+        <Text>
+          <Color green>{pagesPassed} had no violations</Color>, {pagesPassed} of{' '}
+          {reportData.length} total
+        </Text>
+      </Box>
     </Box>
   );
 };
