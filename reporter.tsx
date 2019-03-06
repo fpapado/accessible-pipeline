@@ -19,11 +19,20 @@ const Reporter: React.FunctionComponent<ReporterProps> = props => {
           <Box>
             <Text bold>{result.url}</Text>
           </Box>
-          <Box>
-            <Color red>
-              <Text>Violations: </Text>
-              <Text>{result.violations.length}</Text>
-            </Color>
+          <Box flexDirection="column">
+            <Box>
+              <Color red>
+                <Text>Violations: </Text>
+                <Text>{result.violations.length}</Text>
+              </Color>
+            </Box>
+            <Box marginLeft={1} flexDirection="column">
+              {result.violations.map(violation => (
+                <Box key={violation.id}>
+                  - <Text>{violation.help}</Text>
+                </Box>
+              ))}
+            </Box>
           </Box>
           <Box>
             <Color green>
@@ -54,4 +63,4 @@ async function main(reportFilename: string) {
   render(<Reporter reportData={reportData} />);
 }
 
-main('report-1551901587722.json');
+main('report-1551902940917.json');
