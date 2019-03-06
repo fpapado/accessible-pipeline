@@ -6,6 +6,7 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "single": "LOG_LEVEL=trace TS_NODE_PRETTY=true ts-node index.ts",
+    "report": "TS_NODE_PRETTY=true ts-node reporter.tsx",
     "watch": "tsc --watch --pretty"
   },
   "repository": {
