@@ -92,7 +92,7 @@ async function main(opts?: Options) {
   // To compensate, we store the string, and transform to/from URL href at the edges
   let PAGES_TO_VISIT = new Set([ENTRY]);
   let RESULTS: Array<AxeResults> = [];
-  const PAGE_LIMIT = 20;
+  const PAGE_LIMIT = 2;
 
   log.info('Will run with:', {...options, PAGE_LIMIT});
 
