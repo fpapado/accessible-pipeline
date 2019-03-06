@@ -16,6 +16,10 @@ const writeFile = promisify(fs.writeFile);
 const readFile = promisify(fs.readFile);
 
 // TODO: Source-map-support
+// TODO: Add non-crawl option
+// TODO: Add multiple roots
+// TODO: For multiple roots and crawling, what do we do?
+// TODO: Add reporter UI
 
 // TODO: more granular error boundaries, and error reporting
 // for example {..., fetcherErrors: [{url: ..., reason: ...}]}
