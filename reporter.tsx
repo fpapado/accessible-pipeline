@@ -72,4 +72,4 @@ async function main(reportFilename: string) {
   render(<Reporter reportData={reportData} />);
 }
 
-main('report-1551902940917.json');
+main(process.argv[2]);
