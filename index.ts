@@ -63,9 +63,7 @@ const TEST_OPTIONS: Options = {
   routeManifestPath: 'routes.json',
 };
 
-const ENTRY = 'https://worldtour.fiba3x3.com/2019';
-
-async function main(opts: Options) {
+async function main(rootURL: URL, opts: Options) {
   const options = {...DEFAULT_OPTIONS, ...opts};
 
   // Load RouteManifest, if specified
@@ -93,7 +91,7 @@ async function main(opts: Options) {
   // It is preferable to store a string in the set, otherwise identities get jumbled with objects...
   // Wish there was a good hashed set implementation
   // To compensate, we store the string, and transform to/from URL href at the edges
-  let PAGES_TO_VISIT = new Set([ENTRY]);
+  let PAGES_TO_VISIT = new Set([rootURL.href]);
   let RESULTS: Array<AxeResults> = [];
 
   log.info('Will run with:', {...options});
@@ -192,7 +190,7 @@ async function main(opts: Options) {
   log.info(`Wrote ${reportFileName}`);
 
   const stateObj = {
-    entry: ENTRY,
+    entry: rootURL.href,
     options: options,
     run: run,
     routes: ROUTE_MANIFEST,
@@ -347,8 +345,28 @@ function shouldProcess(
   }
 }
 
-main(TEST_OPTIONS).catch(err => {
-  // TODO: Consider other ways of reporting errors here
-  log.error('The process encountered an unrecoverable error: ', err);
-  process.exit(1);
-});
+// TODO: Accept options from a proper CLI soon (tm)
+function cli() {
+  // Read the url as the first CLI argument
+  // TODO: Accept multiple roots in the future
+  const rootHref = process.argv[2];
+
+  let rootURL: URL;
+  try {
+    rootURL = new URL(rootHref);
+  } catch (err) {
+    log.error(
+      'The URL you provided was in an unexpected format: ',
+      err.toString()
+    );
+    process.exit(1);
+  }
+
+  main(rootURL!, TEST_OPTIONS).catch(err => {
+    // TODO: Consider other ways of reporting errors here
+    log.error('The process encountered an unrecoverable error: ', err);
+    process.exit(1);
+  });
+}
+
+cli();
