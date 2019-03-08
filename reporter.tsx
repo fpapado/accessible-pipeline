@@ -18,36 +18,7 @@ const Reporter: React.FunctionComponent<ReporterProps> = props => {
     <Box flexDirection="column">
       {reportData.map(result => (
         <Box key={result.url} flexDirection="column" marginBottom={1}>
-          <Box>
-            <Text bold>{result.url}</Text>
-          </Box>
-          <Box flexDirection="column">
-            <Box>
-              <Color red>
-                <Text>Violations: </Text>
-                <Text>{result.violations.length}</Text>
-              </Color>
-            </Box>
-            <Box marginLeft={1} flexDirection="column">
-              {result.violations.map(violation => (
-                <Box key={violation.id}>
-                  - <Text>{violation.help}</Text>
-                </Box>
-              ))}
-            </Box>
-          </Box>
-          <Box>
-            <Color green>
-              <Text>Passes: </Text>
-              <Text>{result.passes.length}</Text>
-            </Color>
-          </Box>
-          <Box>
-            <Color blue>
-              <Text>Incomplete: </Text>
-              <Text>{result.incomplete.length}</Text>
-            </Color>
-          </Box>
+          <ResultRow result={result} />
         </Box>
       ))}
       <Box>
@@ -58,6 +29,62 @@ const Reporter: React.FunctionComponent<ReporterProps> = props => {
         </Text>
       </Box>
     </Box>
+  );
+};
+
+type ResultRowProps = {
+  result: AxeResults;
+};
+
+const ResultRow: React.FunctionComponent<ResultRowProps> = ({result}) => {
+  const hasViolations = result.violations.length !== 0;
+
+  return (
+    <>
+      <Box>
+        <Box marginRight={1}>
+          {hasViolations ? (
+            <Color bgRed black>
+              FAIL
+            </Color>
+          ) : (
+            <Color bgGreen black>
+              PASS
+            </Color>
+          )}
+        </Box>
+        <Text bold>{result.url}</Text>
+      </Box>
+      <Box flexDirection="column">
+        {hasViolations ? (
+          <Box>
+            <Color red>
+              <Text>Violations: </Text>
+              <Text>{result.violations.length}</Text>
+            </Color>
+          </Box>
+        ) : null}
+        <Box marginLeft={1} flexDirection="column">
+          {result.violations.map(violation => (
+            <Box key={violation.id}>
+              - <Text>{violation.help}</Text>
+            </Box>
+          ))}
+        </Box>
+      </Box>
+      <Box>
+        <Color green>
+          <Text>Passes: </Text>
+          <Text>{result.passes.length}</Text>
+        </Color>
+      </Box>
+      <Box>
+        <Color blue>
+          <Text>Incomplete: </Text>
+          <Text>{result.incomplete.length}</Text>
+        </Color>
+      </Box>
+    </>
   );
 };
 
