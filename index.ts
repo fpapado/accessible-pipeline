@@ -28,14 +28,13 @@ const readFile = promisify(fs.readFile);
 // TODO: Consider batching / parallelism options
 // TODO: Use batching for resilience
 // TODO: Consider AxE reporting verbosity toggle
-// TODO: (Big one) Router path exclusions
-// @example https://fiba3x3.com/docs/*
 // TODO: Ability to set a UA to hide from analytics
 
 // Common options for excluding links to visit
 // For example *.pdf and #heading-link came up often in early iterations
 type Options = {
   // TODO: entry: string | Array<string>
+  pageLimit: number;
   maxRetries?: number;
   ignoreFragmentLinks?: boolean;
   ignoreExtensions?: Array<string>;
@@ -45,6 +44,7 @@ type Options = {
 const DEFAULT_OPTIONS: Partial<Options> = {maxRetries: 2};
 
 const TEST_OPTIONS: Options = {
+  pageLimit: 10,
   maxRetries: 5,
 
   // TODO: Shoold ignoreExtensions allow not having the '.'?
@@ -65,7 +65,7 @@ const TEST_OPTIONS: Options = {
 
 const ENTRY = 'https://worldtour.fiba3x3.com/2019';
 
-async function main(opts?: Options) {
+async function main(opts: Options) {
   const options = {...DEFAULT_OPTIONS, ...opts};
 
   // Load RouteManifest, if specified
@@ -95,9 +95,8 @@ async function main(opts?: Options) {
   // To compensate, we store the string, and transform to/from URL href at the edges
   let PAGES_TO_VISIT = new Set([ENTRY]);
   let RESULTS: Array<AxeResults> = [];
-  const PAGE_LIMIT = 5;
 
-  log.info('Will run with:', {...options, PAGE_LIMIT});
+  log.info('Will run with:', {...options});
 
   const browser = await puppeteer.launch();
   let run = 0;
@@ -113,7 +112,7 @@ async function main(opts?: Options) {
       ROUTE_MANIFEST,
       ROUTES_VISITED,
       PAGES_VISITED,
-      PAGE_LIMIT,
+      options.pageLimit,
       run,
       pageUrl
     );
@@ -196,6 +195,7 @@ async function main(opts?: Options) {
     entry: ENTRY,
     options: options,
     run: run,
+    routes: ROUTE_MANIFEST,
     pagesVisited: Array.from(PAGES_VISITED.keys()),
     routesVisited: Array.from(ROUTES_VISITED.keys()),
     toVisit: Array.from(PAGES_TO_VISIT.keys()),
@@ -217,7 +217,6 @@ async function processPage(browser: Browser, pageUrl: URL) {
   const results = await analysePage(page);
 
   // Gather next links
-  // TODO: Consider not de-duplicating here, and returning all to the parent to decide
   const nextPages = await gatherNextPages(pageUrl, page);
 
   await page.close();
@@ -277,6 +276,9 @@ function getPagesToVisit(
       return true;
     });
 }
+
+//
+// PROCESSING
 
 type ProcessDecision = {
   shouldProcess: boolean;

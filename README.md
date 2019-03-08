@@ -4,13 +4,27 @@
 
 ## Motivation
 
-CI to catch regressions and low-hanging fruit
-Instrumentation is hard
-Different CI providers have different systems
-Integrating etc.
-Manual work cf. declarative
-
 ## Getting started
+
+You will need node and npm.
+
+In a console, run:
+
+```shell
+npm install
+```
+
+Run the crawler with a url:
+
+```shell
+npm run single https://example.com
+```
+
+View a stored report:
+
+```shell
+npm run report report-XYZ.json
+```
 
 ## Roadmap
 
