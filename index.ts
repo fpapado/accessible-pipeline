@@ -36,14 +36,17 @@ const readFile = promisify(fs.readFile);
 // For example *.pdf and #heading-link came up often in early iterations
 type Options = {
   // TODO: entry: string | Array<string>
+  maxRetries?: number;
   ignoreFragmentLinks?: boolean;
   ignoreExtensions?: Array<string>;
   routeManifestPath?: string;
 };
 
-const DEFAULT_OPTIONS: Partial<Options> = {};
+const DEFAULT_OPTIONS: Partial<Options> = {maxRetries: 2};
 
 const TEST_OPTIONS: Options = {
+  maxRetries: 5,
+
   // TODO: Shoold ignoreExtensions allow not having the '.'?
   ignoreExtensions: ['.pdf', '.zip'],
   // TODO: Should we have a way to say "include at least one fragment link"?
@@ -92,7 +95,7 @@ async function main(opts?: Options) {
   // To compensate, we store the string, and transform to/from URL href at the edges
   let PAGES_TO_VISIT = new Set([ENTRY]);
   let RESULTS: Array<AxeResults> = [];
-  const PAGE_LIMIT = 30;
+  const PAGE_LIMIT = 5;
 
   log.info('Will run with:', {...options, PAGE_LIMIT});
 
@@ -135,23 +138,33 @@ async function main(opts?: Options) {
       // Process the page, get results
       log.info('Will process page');
 
-      let results: Array<AxeResults>;
-      let nextPages: Array<URL>;
-      // let tryCount;
+      const attemptRun = async () => {
+        let succeeded = false;
+        for (let tryCount = 0; tryCount < options.maxRetries!; tryCount++) {
+          if (!succeeded) {
+            log.trace(`Attempt ${tryCount} of ${options.maxRetries}`);
+            try {
+              const processResults = await processPage(browser, pageUrl);
+              succeeded = true;
+              return processResults;
+            } catch (err) {
+              // TODO: Retry here
+              log.error('There was an error processing the page', err);
+            }
+          }
+        }
 
-      try {
-        const processResults = await processPage(browser, pageUrl);
-        results = [processResults.results];
-        nextPages = processResults.nextPages;
-        log.info('Processed page OK');
-      } catch (err) {
-        // TODO: Retry here
-        log.error('There was an error processing the page', err);
-        results = [];
-        nextPages = [];
-      }
+        if (!succeeded) {
+          return Promise.resolve({results: [], nextPages: []});
+        }
+      };
+
+      const runAttempt = await attemptRun();
+      let results = runAttempt!.results;
+      let nextPages = runAttempt!.nextPages;
 
       // Append the results to the list
+      // TODO: Could instead opt to return the results as a stream, and decide where to write in the consumer
       RESULTS = RESULTS.concat(results);
 
       // Remove any visited pages, and add the rest to the ones to visit
