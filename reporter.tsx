@@ -17,7 +17,7 @@ const Reporter: React.FunctionComponent<ReporterProps> = props => {
   return (
     <Box flexDirection="column">
       {reportData.map(result => (
-        <Box key={result.url} flexDirection="column" marginBottom={1}>
+        <Box key={result.url} flexDirection="column" marginBottom={2}>
           <ResultRow result={result} />
         </Box>
       ))}
@@ -66,8 +66,33 @@ const ResultRow: React.FunctionComponent<ResultRowProps> = ({result}) => {
         ) : null}
         <Box marginLeft={1} flexDirection="column">
           {result.violations.map(violation => (
-            <Box key={violation.id}>
-              - <Text>{violation.help}</Text>
+            <Box key={violation.id} marginBottom={1}>
+              -{' '}
+              <Box flexDirection="column">
+                <Box>
+                  <Text>{violation.description}</Text>
+                </Box>
+                <Box>
+                  <Text>{violation.help}</Text>
+                </Box>
+                <Box>
+                  Learn more: <Color underline>{violation.helpUrl}</Color>
+                </Box>
+                <Box>
+                  Nodes:{' '}
+                  <Box flexDirection="column">
+                    {violation.nodes.map(node => (
+                      <Box key={node.target.join('')}>
+                        {node.target.map(target => (
+                          <Color dim>
+                            <Box key={target}>{target}</Box>
+                          </Color>
+                        ))}
+                      </Box>
+                    ))}
+                  </Box>
+                </Box>
+              </Box>
             </Box>
           ))}
         </Box>
@@ -96,6 +121,7 @@ async function main(reportFilename: string) {
     JSON.parse(data)
   );
 
+  // TODO: Options, e.g. "showNodes"
   render(<Reporter reportData={reportData} />);
 }
 
