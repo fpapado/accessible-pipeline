@@ -27,8 +27,6 @@ const readFile = promisify(fs.readFile);
 // for example {..., fetcherErrors: [{url: ..., reason: ...}]}
 // - "Friends don't let friends not handle errors"
 
-// TODO: Consider batching / parallelism options
-// TODO: Use batching for resilience
 // TODO: Consider AxE reporting verbosity toggle
 // TODO: Ability to set a UA to hide from analytics
 
@@ -99,7 +97,6 @@ async function main(streaming: boolean, rootURL: URL, opts: Options) {
   const browser = await puppeteer.launch();
   let run = 0;
 
-  // TODO: Maybe we need a while here
   // TODO: Consider Depth-First Search vs. Breadth-First Search
   for (const pageHref of PAGES_TO_VISIT) {
     // First, convert to a URL (if we have gotten this from the scripts below, this is OK)
@@ -124,9 +121,7 @@ async function main(streaming: boolean, rootURL: URL, opts: Options) {
       log.info('Will check', pageUrl.href);
 
       // Also add "in progress" to the result log
-      if (streaming) {
-        resultLog.info({msg: 'InProgress', href: pageUrl.href});
-      }
+      streamingSendInProgress(streaming, pageUrl.href);
 
       // Add to pages visited, remove from queue
       PAGES_VISITED.add(pageUrl.href);
@@ -168,44 +163,8 @@ async function main(streaming: boolean, rootURL: URL, opts: Options) {
       // TODO: Could instead opt to return the results as a stream, and decide where to write in the consumer
       RESULTS = RESULTS.concat(results);
 
-      // Write to the results stream, after rewriting results to only keep the node targets
-      // Helps avoid some odd edge cases where the JSON breaks parsing when piping, because of the HTML content
-      if (streaming) {
-        resultLog.info({
-          msg: 'GotResults',
-          results: {
-            ...results,
-            violations: results.violations.map(violation => ({
-              ...violation,
-              nodes: violation.nodes.map(node => ({
-                // Only keep the target, since that's what we report on
-                target: node.target,
-              })),
-            })),
-            passes: results.passes.map(pass => ({
-              ...pass,
-              nodes: pass.nodes.map(node => ({
-                // Only keep the target, since that's what we report on
-                target: node.target,
-              })),
-            })),
-            incomplete: results.incomplete.map(violation => ({
-              ...violation,
-              nodes: violation.nodes.map(node => ({
-                // Only keep the target, since that's what we report on
-                target: node.target,
-              })),
-            })),
-            inapplicable: results.inapplicable.map(violation => ({
-              ...violation,
-              nodes: violation.nodes.map(node => ({
-                // Only keep the target, since that's what we report on
-                target: node.target,
-              })),
-            })),
-          },
-        });
-      }
+      // Send a 'GotResults' message on the streaming channel
+      streamingSendGotResults(streaming, results);
 
       // Remove any visited pages, and add the rest to the ones to visit
       const pagesToVisit = getPagesToVisit(nextPages, PAGES_VISITED, options);
@@ -386,6 +345,60 @@ function shouldProcess(
     }
   }
 }
+
+//
+// STREAMING
+
+function streamingSendInProgress(streaming: boolean, href: string) {
+  if (streaming) {
+    resultLog.info({msg: 'InProgress', href});
+  }
+}
+
+function streamingSendGotResults(streaming: boolean, results: AxeResults) {
+  // Write to the results stream, after rewriting results to only keep the node targets
+  // Helps avoid some odd edge cases where the JSON breaks parsing when piping, because of the HTML content
+  // TODO: Declare StreamingAxeResults type, which matches the shape we actually send.
+  if (streaming) {
+    resultLog.info({
+      msg: 'GotResults',
+      results: {
+        ...results,
+        violations: results.violations.map(violation => ({
+          ...violation,
+          nodes: violation.nodes.map(node => ({
+            // Only keep the target, since that's what we report on
+            target: node.target,
+          })),
+        })),
+        passes: results.passes.map(pass => ({
+          ...pass,
+          nodes: pass.nodes.map(node => ({
+            // Only keep the target, since that's what we report on
+            target: node.target,
+          })),
+        })),
+        incomplete: results.incomplete.map(violation => ({
+          ...violation,
+          nodes: violation.nodes.map(node => ({
+            // Only keep the target, since that's what we report on
+            target: node.target,
+          })),
+        })),
+        inapplicable: results.inapplicable.map(violation => ({
+          ...violation,
+          nodes: violation.nodes.map(node => ({
+            // Only keep the target, since that's what we report on
+            target: node.target,
+          })),
+        })),
+      },
+    });
+  }
+}
+
+//
+// CLI
 
 // TODO: Accept options from a proper CLI soon (tm)
 function cli() {
