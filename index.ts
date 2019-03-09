@@ -22,7 +22,6 @@ const readFile = promisify(fs.readFile);
 // TODO: Add non-crawl option
 // TODO: Add multiple roots
 // TODO: For multiple roots and crawling, what do we do?
-// TODO: Add reporter UI
 
 // TODO: more granular error boundaries, and error reporting
 // for example {..., fetcherErrors: [{url: ..., reason: ...}]}
@@ -47,7 +46,7 @@ type Options = {
 const DEFAULT_OPTIONS: Partial<Options> = {maxRetries: 2};
 
 const TEST_OPTIONS: Options = {
-  pageLimit: 10,
+  pageLimit: 20,
   maxRetries: 5,
 
   // TODO: Shoold ignoreExtensions allow not having the '.'?
@@ -62,16 +61,14 @@ const TEST_OPTIONS: Options = {
   //  We should specify that we mean the former!
   // TODO: Actually make it work like that. '#/route' gets picked up atm...
   ignoreFragmentLinks: true,
-
   routeManifestPath: 'routes.json',
 };
 
-async function main(rootURL: URL, opts: Options) {
+async function main(streaming: boolean, rootURL: URL, opts: Options) {
   const options = {...DEFAULT_OPTIONS, ...opts};
 
   // Load RouteManifest, if specified
   // TODO: Consider a union for this
-  const MANIFEST_SPECIFIED = !!options.routeManifestPath;
   let ROUTE_MANIFEST;
   if (options.routeManifestPath) {
     // Read the manifest specified
@@ -127,7 +124,9 @@ async function main(rootURL: URL, opts: Options) {
       log.info('Will check', pageUrl.href);
 
       // Also add "in progress" to the result log
-      resultLog.info({msg: 'InProgress', href: pageUrl.href});
+      if (streaming) {
+        resultLog.info({msg: 'InProgress', href: pageUrl.href});
+      }
 
       // Add to pages visited, remove from queue
       PAGES_VISITED.add(pageUrl.href);
@@ -151,7 +150,6 @@ async function main(rootURL: URL, opts: Options) {
               succeeded = true;
               return processResults;
             } catch (err) {
-              // TODO: Retry here
               log.error('There was an error processing the page', err);
             }
           }
@@ -172,40 +170,42 @@ async function main(rootURL: URL, opts: Options) {
 
       // Write to the results stream, after rewriting results to only keep the node targets
       // Helps avoid some odd edge cases where the JSON breaks parsing when piping, because of the HTML content
-      resultLog.info({
-        msg: 'GotResults',
-        results: {
-          ...results,
-          violations: results.violations.map(violation => ({
-            ...violation,
-            nodes: violation.nodes.map(node => ({
-              // Only keep the target, since that's what we report on
-              target: node.target,
+      if (streaming) {
+        resultLog.info({
+          msg: 'GotResults',
+          results: {
+            ...results,
+            violations: results.violations.map(violation => ({
+              ...violation,
+              nodes: violation.nodes.map(node => ({
+                // Only keep the target, since that's what we report on
+                target: node.target,
+              })),
             })),
-          })),
-          passes: results.passes.map(pass => ({
-            ...pass,
-            nodes: pass.nodes.map(node => ({
-              // Only keep the target, since that's what we report on
-              target: node.target,
+            passes: results.passes.map(pass => ({
+              ...pass,
+              nodes: pass.nodes.map(node => ({
+                // Only keep the target, since that's what we report on
+                target: node.target,
+              })),
             })),
-          })),
-          incomplete: results.incomplete.map(violation => ({
-            ...violation,
-            nodes: violation.nodes.map(node => ({
-              // Only keep the target, since that's what we report on
-              target: node.target,
+            incomplete: results.incomplete.map(violation => ({
+              ...violation,
+              nodes: violation.nodes.map(node => ({
+                // Only keep the target, since that's what we report on
+                target: node.target,
+              })),
             })),
-          })),
-          inapplicable: results.inapplicable.map(violation => ({
-            ...violation,
-            nodes: violation.nodes.map(node => ({
-              // Only keep the target, since that's what we report on
-              target: node.target,
+            inapplicable: results.inapplicable.map(violation => ({
+              ...violation,
+              nodes: violation.nodes.map(node => ({
+                // Only keep the target, since that's what we report on
+                target: node.target,
+              })),
             })),
-          })),
-        },
-      });
+          },
+        });
+      }
 
       // Remove any visited pages, and add the rest to the ones to visit
       const pagesToVisit = getPagesToVisit(nextPages, PAGES_VISITED, options);
@@ -359,7 +359,6 @@ function shouldProcess(
       const routes = ROUTE_MANIFEST.map(matchit.parse);
       const matchesRoute = (str: string) => matchit.match(str, routes);
       const routeMatch = matchesRoute(pageUrl.pathname);
-      log.trace(pageUrl.pathname, routeMatch.length);
 
       if (routeMatch.length) {
         // If the page matches one of the routes specified, then check if visited
@@ -390,6 +389,9 @@ function shouldProcess(
 
 // TODO: Accept options from a proper CLI soon (tm)
 function cli() {
+  // Whether to output a results stream under resultsLog
+  const streaming = false;
+
   // Read the url as the first CLI argument
   // TODO: Accept multiple roots in the future
   const rootHref = process.argv[2];
@@ -405,7 +407,7 @@ function cli() {
     process.exit(1);
   }
 
-  main(rootURL!, TEST_OPTIONS).catch(err => {
+  main(streaming, rootURL!, TEST_OPTIONS).catch(err => {
     // TODO: Consider other ways of reporting errors here
     log.error('The process encountered an unrecoverable error: ', err);
     process.exit(1);

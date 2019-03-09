@@ -1,10 +1,4 @@
-import React, {
-  useContext,
-  useEffect,
-  useMemo,
-  useReducer,
-  useState,
-} from 'react';
+import React, {useContext, useEffect, useMemo, useReducer} from 'react';
 import {render, Box, Text, Color, StdinContext, Static} from 'ink';
 import fs from 'fs';
 import {promisify} from 'util';
