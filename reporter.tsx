@@ -258,3 +258,9 @@ async function main(opts: Options) {
 
 // Streaming
 main({reportSource: {type: 'stdin'}});
+
+type CLIOPtions = {
+  streaming: boolean;
+};
+
+export function cliEntry() {}

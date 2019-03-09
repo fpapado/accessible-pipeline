@@ -41,37 +41,14 @@ type Options = {
   routeManifestPath?: string;
 };
 
-const DEFAULT_OPTIONS: Partial<Options> = {maxRetries: 2};
-
-const TEST_OPTIONS: Options = {
-  pageLimit: 20,
-  maxRetries: 5,
-
-  // TODO: Shoold ignoreExtensions allow not having the '.'?
-  ignoreExtensions: ['.pdf', '.zip'],
-  // TODO: Should we have a way to say "include at least one fragment link"?
-  //  I cannot easily imagine a page having only 'example.com#thing' links to it, but it could happen...
-  //  or do we just advise folks to add it to roots?
-
-  // TODO: Consider the naming fragment vs hash
-  //  in particular, this is about 'example.com/faq#question and *not* about example.com/#/route
-  //  the former is common for linking to headings, the latter is common for some client-side routing
-  //  We should specify that we mean the former!
-  // TODO: Actually make it work like that. '#/route' gets picked up atm...
-  ignoreFragmentLinks: true,
-  routeManifestPath: 'routes.json',
-};
-
 async function main(streaming: boolean, rootURL: URL, opts: Options) {
-  const options = {...DEFAULT_OPTIONS, ...opts};
-
   // Load RouteManifest, if specified
   // TODO: Consider a union for this
   let ROUTE_MANIFEST;
-  if (options.routeManifestPath) {
+  if (opts.routeManifestPath) {
     // Read the manifest specified
     try {
-      ROUTE_MANIFEST = await readFile(options.routeManifestPath, 'utf8').then(
+      ROUTE_MANIFEST = await readFile(opts.routeManifestPath, 'utf8').then(
         data => JSON.parse(data)
       );
     } catch (err) {
@@ -92,7 +69,7 @@ async function main(streaming: boolean, rootURL: URL, opts: Options) {
   let PAGES_TO_VISIT = new Set([rootURL.href]);
   let RESULTS: Array<AxeResults> = [];
 
-  log.info('Will run with:', {...options});
+  log.info('Will run with:', {...opts});
 
   const browser = await puppeteer.launch();
   let run = 0;
@@ -107,7 +84,7 @@ async function main(streaming: boolean, rootURL: URL, opts: Options) {
       ROUTE_MANIFEST,
       ROUTES_VISITED,
       PAGES_VISITED,
-      options.pageLimit,
+      opts.pageLimit,
       run,
       pageUrl
     );
@@ -123,6 +100,8 @@ async function main(streaming: boolean, rootURL: URL, opts: Options) {
       // Also add "in progress" to the result log
       streamingSendInProgress(streaming, pageUrl.href);
 
+      // TODO: streamingReportError(streaming, {href: pageUrl.href, error: err});
+
       // Add to pages visited, remove from queue
       PAGES_VISITED.add(pageUrl.href);
       PAGES_TO_VISIT.delete(pageUrl.href);
@@ -137,9 +116,9 @@ async function main(streaming: boolean, rootURL: URL, opts: Options) {
 
       const attemptRun = async () => {
         let succeeded = false;
-        for (let tryCount = 1; tryCount <= options.maxRetries!; tryCount++) {
+        for (let tryCount = 1; tryCount <= opts.maxRetries!; tryCount++) {
           if (!succeeded) {
-            log.trace(`Attempt ${tryCount} of ${options.maxRetries}`);
+            log.trace(`Attempt ${tryCount} of ${opts.maxRetries}`);
             try {
               const processResults = await processPage(browser, pageUrl);
               succeeded = true;
@@ -167,7 +146,7 @@ async function main(streaming: boolean, rootURL: URL, opts: Options) {
       streamingSendGotResults(streaming, results);
 
       // Remove any visited pages, and add the rest to the ones to visit
-      const pagesToVisit = getPagesToVisit(nextPages, PAGES_VISITED, options);
+      const pagesToVisit = getPagesToVisit(nextPages, PAGES_VISITED, opts);
 
       // NOTE: We trasnform from a URL to href for storage, see the reasons in Set above
       pagesToVisit.forEach(page => PAGES_TO_VISIT.add(page.href));
@@ -193,7 +172,7 @@ async function main(streaming: boolean, rootURL: URL, opts: Options) {
 
   const stateObj = {
     entry: rootURL.href,
-    options: options,
+    options: opts,
     run: run,
     routes: ROUTE_MANIFEST,
     pagesVisited: Array.from(PAGES_VISITED.keys()),
@@ -400,31 +379,31 @@ function streamingSendGotResults(streaming: boolean, results: AxeResults) {
 //
 // CLI
 
-// TODO: Accept options from a proper CLI soon (tm)
-function cli() {
+export type CLIOptions = Options & {
+  streaming: boolean;
+};
+
+// TODO: Accept multiple roots in the future
+export function cliEntry(rootHref: string, opts: CLIOptions) {
   // Whether to output a results stream under resultsLog
-  const streaming = false;
+  const {streaming, ...options} = opts;
 
   // Read the url as the first CLI argument
-  // TODO: Accept multiple roots in the future
-  const rootHref = process.argv[2];
-
   let rootURL: URL;
+
   try {
     rootURL = new URL(rootHref);
   } catch (err) {
-    log.error(
+    log.fatal(
       'The URL you provided was in an unexpected format: ',
       err.toString()
     );
     process.exit(1);
   }
 
-  main(streaming, rootURL!, TEST_OPTIONS).catch(err => {
+  main(streaming, rootURL!, options).catch(err => {
     // TODO: Consider other ways of reporting errors here
-    log.error('The process encountered an unrecoverable error: ', err);
+    log.fatal('The process encountered an unrecoverable error: ', err);
     process.exit(1);
   });
 }
-
-cli();

@@ -44,6 +44,7 @@
     "pino-pretty": "^2.5.0",
     "puppeteer": "^1.12.2",
     "react": "^16.8.4",
+    "sade": "^1.4.2",
     "split2": "^3.1.0"
   },
   "devDependencies": {
