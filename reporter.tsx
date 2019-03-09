@@ -253,14 +253,18 @@ async function main(opts: Options) {
   }
 }
 
-// With file
-// main({reportSource: {type: 'file', fileName: process.argv[2]}});
-
-// Streaming
-main({reportSource: {type: 'stdin'}});
+//
+// CLI ENTRY
 
 type CLIOPtions = {
   streaming: boolean;
 };
 
-export function cliEntry() {}
+// TODO: Figure out the exact process for streaming, if even available through CLI
+export function cliEntry(fileName: string, opts: CLIOPtions) {
+  if (!opts.streaming) {
+    main({reportSource: {type: 'file', fileName}});
+  } else {
+    console.log('WIP');
+  }
+}

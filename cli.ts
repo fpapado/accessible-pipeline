@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 import sade from 'sade';
 import * as run from './index';
+import * as report from './reporter';
 
 const prog = sade('accessible-pipeline');
 
@@ -35,8 +36,16 @@ prog
     'A comma-separated list of extensions to ignore. Useful for avoiding certain non-html links.'
   )
   .action((url: string, opts: run.CLIOptions) => {
-    console.log(url, opts);
-    run.cliEntry(url, opts);
+    let ignoreExtensions;
+    if (opts.ignoreExtensions) {
+      // TODO: Do some more validation here
+      // TODO: Define CLIOptions above, and then below
+      ignoreExtensions = ((opts.ignoreExtensions as any) as string)
+        .split(',')
+        .map(str => str.trim());
+      console.log(ignoreExtensions);
+    }
+    run.cliEntry(url, {...opts, ignoreExtensions});
   });
 
 prog
@@ -45,8 +54,8 @@ prog
     'View a report output by accessible-pipeline run. Expects the path to a report file.'
   )
   .example('view report-1234.json')
-  .action((pathToReport: string, opts: unknown) => {
-    console.log(pathToReport, opts);
+  .action((pathToReport: string, opts: {}) => {
+    report.cliEntry(pathToReport, {streaming: false});
   });
 
 prog.parse(process.argv);
@@ -61,6 +70,7 @@ const description = `
       --ignoreExtensions
       --ci (prints computer-centric output, without the reporter; exits (1) on any failure)
       --pretty (prettifies the output; different from the reporter)
+      --streamable
 
       By default, it shows the report by setting (streamable=true) and piping in to the reporter.
       Saves the report to a file.
