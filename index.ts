@@ -11,6 +11,9 @@ import matchit from 'matchit';
 // Create a child logger scoped to the module
 const log = logger.child({module: 'root'});
 
+// Create a logger for results
+const resultLog = logger.child({module: 'results'});
+
 // Promise-friendly core fns
 const writeFile = promisify(fs.writeFile);
 const readFile = promisify(fs.readFile);
@@ -44,7 +47,7 @@ type Options = {
 const DEFAULT_OPTIONS: Partial<Options> = {maxRetries: 2};
 
 const TEST_OPTIONS: Options = {
-  pageLimit: 10,
+  pageLimit: 5,
   maxRetries: 5,
 
   // TODO: Shoold ignoreExtensions allow not having the '.'?
@@ -123,6 +126,9 @@ async function main(rootURL: URL, opts: Options) {
 
       log.info('Will check', pageUrl.href);
 
+      // Also add "in progress" to the result log
+      resultLog.info({msg: 'InProgress', href: pageUrl.href});
+
       // Add to pages visited, remove from queue
       PAGES_VISITED.add(pageUrl.href);
       PAGES_TO_VISIT.delete(pageUrl.href);
@@ -137,7 +143,7 @@ async function main(rootURL: URL, opts: Options) {
 
       const attemptRun = async () => {
         let succeeded = false;
-        for (let tryCount = 0; tryCount < options.maxRetries!; tryCount++) {
+        for (let tryCount = 1; tryCount <= options.maxRetries!; tryCount++) {
           if (!succeeded) {
             log.trace(`Attempt ${tryCount} of ${options.maxRetries}`);
             try {
@@ -163,6 +169,9 @@ async function main(rootURL: URL, opts: Options) {
       // Append the results to the list
       // TODO: Could instead opt to return the results as a stream, and decide where to write in the consumer
       RESULTS = RESULTS.concat(results);
+
+      // Write to the results stream
+      resultLog.info({msg: 'GotResults', results});
 
       // Remove any visited pages, and add the rest to the ones to visit
       const pagesToVisit = getPagesToVisit(nextPages, PAGES_VISITED, options);

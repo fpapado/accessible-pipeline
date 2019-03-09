@@ -6,6 +6,7 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "single": "LOG_LEVEL=trace TS_NODE_PRETTY=true ts-node index.ts",
+    "production:single": "NODE_ENV=production LOG_LEVEL=info TS_NODE_PRETTY=true ts-node index.ts",
     "report": "TS_NODE_PRETTY=true ts-node reporter.tsx",
     "watch": "tsc --watch --pretty"
   },
@@ -31,14 +32,17 @@
     "@types/pino": "^5.8.5",
     "@types/puppeteer": "^1.12.1",
     "@types/react": "^16.8.6",
+    "@types/split2": "^2.1.6",
     "axe-puppeteer": "^1.0.0",
     "cheerio": "^1.0.0-rc.2",
-    "ink": "^2.0.3",
+    "fast-json-parse": "^1.0.3",
+    "ink": "^2.0.5",
     "matchit": "^1.0.7",
     "pino": "^5.11.1",
     "pino-pretty": "^2.5.0",
     "puppeteer": "^1.12.2",
-    "react": "^16.8.4"
+    "react": "^16.8.4",
+    "split2": "^3.1.0"
   },
   "devDependencies": {
     "nodemon": "^1.18.10",
