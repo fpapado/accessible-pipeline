@@ -5,11 +5,10 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "single": "LOG_LEVEL=trace TS_NODE_PRETTY=true ts-node index.ts",
-    "production:single": "NODE_ENV=production LOG_LEVEL=info TS_NODE_PRETTY=true ts-node index.ts",
-    "streaming": "LOG_LEVEL=trace TS_NODE_PRETTY=true ts-node index.ts --streaming",
-    "production:streaming": "NODE_ENV=production LOG_LEVEL=info TS_NODE_PRETTY=true ts-node index.ts --streaming",
-    "report": "TS_NODE_PRETTY=true ts-node reporter.tsx",
+    "cli-run": "LOG_LEVEL=trace TS_NODE_PRETTY=true ts-node cli.ts run",
+    "production:cli-run": "NODE_ENV=production LOG_LEVEL=info TS_NODE_PRETTY=true ts-node cli.ts run",
+    "cli-view": "TS_NODE_PRETTY=true ts-node cli.ts view",
+    "production:cli-view": "TS_NODE_PRETTY=true ts-node cli.ts view",
     "watch": "tsc --watch --pretty"
   },
   "repository": {
