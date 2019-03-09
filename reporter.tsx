@@ -1,9 +1,14 @@
-import React, {useContext, useEffect, useMemo, useReducer} from 'react';
+import React, {
+  useContext,
+  useEffect,
+  useMemo,
+  useReducer,
+  useState,
+} from 'react';
 import {render, Box, Text, Color, StdinContext, Static} from 'ink';
 import fs from 'fs';
 import {promisify} from 'util';
 import split from 'split2';
-import jsonParse from 'fast-json-parse';
 import {AxeResults} from 'axe-core';
 const readFile = promisify(fs.readFile);
 
@@ -74,22 +79,19 @@ const StreamingReporter: React.FunctionComponent<{}> = ({}) => {
     const splitStdin = stdin.pipe(split());
 
     const onData = (data: any) => {
-      // use jsonParse instead of JSON.parse, because the latter throws
-      const parsed = jsonParse<MessageFormat>(data);
-
-      if (!parsed.err) {
-        const value = parsed.value;
+      try {
+        const parsed = JSON.parse(data) as MessageFormat;
+        const value = parsed;
 
         if (value.module === 'results') {
           if (value.msg === 'GotResults') {
-            console.log('Got results');
             dispatch({msg: 'GotResults', results: value.results});
           }
           if (value.msg === 'InProgress') {
             dispatch({msg: 'InProgress', href: value.href});
           }
         }
-      }
+      } catch (err) {}
     };
 
     // Add the subscription
@@ -133,7 +135,12 @@ const Reporter: React.FunctionComponent<ReporterProps> = props => {
       {hasPendingTests ? (
         <Box flexDirection="column">
           {inProgress.map(href => (
-            <Box key={href}>In progress: {href}</Box>
+            <Box key={href}>
+              <Color bgYellow black>
+                RUN
+              </Color>{' '}
+              {href}
+            </Box>
           ))}
         </Box>
       ) : null}
@@ -246,7 +253,6 @@ async function main(opts: Options) {
     const reportData = await readFile(opts.reportSource.fileName, 'utf8').then(
       data => JSON.parse(data)
     );
-
     render(<Reporter inProgress={[]} results={reportData} />);
   } else if (opts.reportSource.type === 'stdin') {
     render(<StreamingReporter />);

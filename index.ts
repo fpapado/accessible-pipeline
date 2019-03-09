@@ -47,7 +47,7 @@ type Options = {
 const DEFAULT_OPTIONS: Partial<Options> = {maxRetries: 2};
 
 const TEST_OPTIONS: Options = {
-  pageLimit: 5,
+  pageLimit: 10,
   maxRetries: 5,
 
   // TODO: Shoold ignoreExtensions allow not having the '.'?
@@ -163,15 +163,49 @@ async function main(rootURL: URL, opts: Options) {
       };
 
       const runAttempt = await attemptRun();
-      let results = runAttempt!.results;
+      let results = runAttempt!.results as AxeResults;
       let nextPages = runAttempt!.nextPages;
 
       // Append the results to the list
       // TODO: Could instead opt to return the results as a stream, and decide where to write in the consumer
       RESULTS = RESULTS.concat(results);
 
-      // Write to the results stream
-      resultLog.info({msg: 'GotResults', results});
+      // Write to the results stream, after rewriting results to only keep the node targets
+      // Helps avoid some odd edge cases where the JSON breaks parsing when piping, because of the HTML content
+      resultLog.info({
+        msg: 'GotResults',
+        results: {
+          ...results,
+          violations: results.violations.map(violation => ({
+            ...violation,
+            nodes: violation.nodes.map(node => ({
+              // Only keep the target, since that's what we report on
+              target: node.target,
+            })),
+          })),
+          passes: results.passes.map(pass => ({
+            ...pass,
+            nodes: pass.nodes.map(node => ({
+              // Only keep the target, since that's what we report on
+              target: node.target,
+            })),
+          })),
+          incomplete: results.incomplete.map(violation => ({
+            ...violation,
+            nodes: violation.nodes.map(node => ({
+              // Only keep the target, since that's what we report on
+              target: node.target,
+            })),
+          })),
+          inapplicable: results.inapplicable.map(violation => ({
+            ...violation,
+            nodes: violation.nodes.map(node => ({
+              // Only keep the target, since that's what we report on
+              target: node.target,
+            })),
+          })),
+        },
+      });
 
       // Remove any visited pages, and add the rest to the ones to visit
       const pagesToVisit = getPagesToVisit(nextPages, PAGES_VISITED, options);
