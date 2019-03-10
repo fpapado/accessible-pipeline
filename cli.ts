@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 import {spawn} from 'child_process';
 import sade from 'sade';
-import * as run from './index';
-import * as report from './reporter';
+import * as run from './src/run';
+import * as report from './src/report';
 
 const prog = sade('accessible-pipeline');
 
