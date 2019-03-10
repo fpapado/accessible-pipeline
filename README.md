@@ -1,6 +1,6 @@
 # Accessible Pipeline
 
-> Acceessibility on CI, made easy
+> Accessibility on CI, made easy.
 
 ## Motivation
 
@@ -18,19 +18,19 @@ You will need node and npm.
 In a console, run:
 
 ```shell
-npm install
+npm install accessible-pipeline
 ```
 
 Run the crawler with a url:
 
 ```shell
-npm run single https://example.com
+accessible-pipeline run https://example.com
 ```
 
 View a stored report:
 
 ```shell
-npm run report report-XYZ.json
+accessible-pipeline view --file report-XYZ.json
 ```
 
 ## Report Format
