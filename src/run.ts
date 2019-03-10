@@ -60,6 +60,7 @@ async function main(streaming: boolean, rootURL: URL, opts: Options) {
     // TODO: Validate the format
   }
 
+  // TODO: Make a "pages considered" list as well
   const PAGES_VISITED = new Set<string>();
   const ROUTES_VISITED = new Set<string>();
 
@@ -89,13 +90,22 @@ async function main(streaming: boolean, rootURL: URL, opts: Options) {
       pageUrl
     );
 
-    log.info(`Should process: ${shouldRun}, reason: ${reason.type}`);
+    log.info(
+      `Page: ${pageUrl.href}. Should process: ${shouldRun}, reason: ${
+        reason.type
+      }`
+    );
+
+    // Remove from queue if it will not run
+    if (!shouldRun) {
+      PAGES_TO_VISIT.delete(pageUrl.href);
+    }
 
     if (shouldRun) {
       run++;
       log.trace('Run', run);
 
-      log.info('Will check', pageUrl.href);
+      log.info('Will process', pageUrl.href);
 
       // Also add "in progress" to the result log
       streamingSendInProgress(streaming, pageUrl.href);
@@ -112,8 +122,6 @@ async function main(streaming: boolean, rootURL: URL, opts: Options) {
       }
 
       // Process the page, get results
-      log.info('Will process page');
-
       const attemptRun = async () => {
         let succeeded = false;
         for (let tryCount = 1; tryCount <= opts.maxRetries!; tryCount++) {
