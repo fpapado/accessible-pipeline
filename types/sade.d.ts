@@ -8,6 +8,7 @@ interface Prog {
   option(declaration: string, desc: string, value?: any): Prog;
   action(handler: any): Prog;
   parse(arv: any): Prog;
+  help(): Prog;
 }
 
 declare function createProgram(name: any): Prog;

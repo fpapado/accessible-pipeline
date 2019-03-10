@@ -381,6 +381,7 @@ function streamingSendGotResults(streaming: boolean, results: AxeResults) {
 
 export type CLIOptions = Options & {
   streaming: boolean;
+  ci: boolean;
 };
 
 // TODO: Accept multiple roots in the future

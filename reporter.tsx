@@ -256,15 +256,16 @@ async function main(opts: Options) {
 //
 // CLI ENTRY
 
-type CLIOPtions = {
-  streaming: boolean;
+export type CLIOptions = {
+  streaming?: boolean;
+  file?: string;
 };
 
 // TODO: Figure out the exact process for streaming, if even available through CLI
-export function cliEntry(fileName: string, opts: CLIOPtions) {
-  if (!opts.streaming) {
-    main({reportSource: {type: 'file', fileName}});
-  } else {
-    console.log('WIP');
+export function cliEntry(opts: CLIOptions) {
+  if (opts.streaming) {
+    main({reportSource: {type: 'stdin'}});
+  } else if (opts.file) {
+    main({reportSource: {type: 'file', fileName: opts.file}});
   }
 }

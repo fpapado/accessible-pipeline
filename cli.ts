@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import {spawn} from 'child_process';
 import sade from 'sade';
 import * as run from './index';
 import * as report from './reporter';
@@ -35,27 +36,55 @@ prog
     '--ignoreExtensions',
     'A comma-separated list of extensions to ignore. Useful for avoiding certain non-html links.'
   )
+  .option('--ci', 'Exits 1 on error, outputs only operational logs.')
+  .option(
+    '--streaming',
+    'Output specific information on stdout under the "results" module. Use together with `accessible-pipeline view --streaming`, to display a live reporter.'
+  )
   .action((url: string, opts: run.CLIOptions) => {
-    let ignoreExtensions;
-    if (opts.ignoreExtensions) {
-      // TODO: Do some more validation here
-      // TODO: Define CLIOptions above, and then below
-      ignoreExtensions = ((opts.ignoreExtensions as any) as string)
-        .split(',')
-        .map(str => str.trim());
-      console.log(ignoreExtensions);
+    // If CI is specified, ditch the reporter and output the regular JSON
+    if (opts.ci) {
+      let ignoreExtensions;
+      if (opts.ignoreExtensions) {
+        // TODO: Do some more validation here
+        // TODO: Define CLIOptions above, and then below
+        ignoreExtensions = ((opts.ignoreExtensions as any) as string)
+          .split(',')
+          .map(str => str.trim());
+      }
+      run.cliEntry(url, {...opts, ignoreExtensions});
+    } else {
+      console.log(process.argv.slice(3));
+      const run = spawn('ts-node', [
+        ...process.argv.slice(1),
+        '--ci',
+        '--streaming',
+      ]);
+      const view = spawn('ts-node', ['cli.ts', 'view', '--streaming']);
+
+      run.stdout.pipe(view.stdin);
+      view.stdout.pipe(process.stdout);
     }
-    run.cliEntry(url, {...opts, ignoreExtensions});
   });
 
 prog
-  .command('view <pathToReport>')
+  .command('view')
   .describe(
-    'View a report output by accessible-pipeline run. Expects the path to a report file.'
+    'View a report output by `accessible-pipeline run`. Expects the path to a report file, or a stream in stdin.'
   )
-  .example('view report-1234.json')
-  .action((pathToReport: string, opts: {}) => {
-    report.cliEntry(pathToReport, {streaming: false});
+  .example('view --file report-1234.json')
+  .option('-f, --file', 'The path to a report file.')
+  .option(
+    '--streaming',
+    'Listen to stdin. Use together with `accessible-pipeline run --streaming`, to display a live reporter.'
+  )
+  .action((opts: report.CLIOptions) => {
+    if (!opts.file && !opts.streaming) {
+      console.log(
+        '  ERROR\n    One of either --file or --streaming must be specified.\n\n  Run `$ accessible-pipeline view --help` for more info.'
+      );
+    }
+    report.cliEntry({streaming: opts.streaming, file: opts.file});
   });
 
 prog.parse(process.argv);
