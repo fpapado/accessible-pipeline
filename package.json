@@ -2,7 +2,7 @@
   "name": "accessible-pipeline",
   "version": "0.1.0",
   "description": "Acessibility checks in CI, made easy",
-  "main": "bin/cli.js",
+  "main": "./bin/cli.js",
   "bin": {
     "accessible-pipeline": "./bin/cli.js"
   },
@@ -40,7 +40,6 @@
     "@types/split2": "^2.1.6",
     "axe-puppeteer": "^1.0.0",
     "cheerio": "^1.0.0-rc.2",
-    "fast-json-parse": "^1.0.3",
     "ink": "^2.0.5",
     "matchit": "^1.0.7",
     "pino": "^5.11.1",
@@ -51,7 +50,6 @@
     "split2": "^3.1.0"
   },
   "devDependencies": {
-    "nodemon": "^1.18.10",
     "prettier": "^1.16.4",
     "ts-node": "^8.0.2",
     "typescript": "^3.3.3333"
