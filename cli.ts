@@ -69,6 +69,14 @@ prog
       }
       run.cliEntry(url, {...opts, ignoreExtensions});
     } else {
+      // Similar to the check above
+      if (process.env.DEBUG_LOG_PRETTY === 'true') {
+        console.log(
+          '  ERROR\n    You cannot set DEBUG_LOG_PRETTY and show the reporter, because it relies on the JSON output.\n    If you want to debug only the process output consider setting --ci and not --streaming.'
+        );
+        process.exit(1);
+      }
+
       // If not in CI, set up two processes: a runner and a reporter
       // The runner is the `run` command with --ci and --streaming, and other options forwarded
       // The reporter is the `view` command with --streaming
@@ -76,7 +84,8 @@ prog
       // the terminal
       const run = spawn('./bin/cli.js', [
         // Forward the existing arguments
-        ...process.argv.slice(2),
+        'run',
+        ...process.argv.slice(3),
         // Append --ci and --streaming
         '--ci',
         '--streaming',

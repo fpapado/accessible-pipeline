@@ -100,7 +100,7 @@ async function main(streaming: boolean, rootURL: URL, opts: Options) {
       // Also add "in progress" to the result log
       streamingSendInProgress(streaming, pageUrl.href);
 
-      // TODO: streamingReportError(streaming, {href: pageUrl.href, error: err});
+      // TODO: streamingSendReportError(streaming, {href: pageUrl.href, error: err});
 
       // Add to pages visited, remove from queue
       PAGES_VISITED.add(pageUrl.href);
@@ -130,6 +130,7 @@ async function main(streaming: boolean, rootURL: URL, opts: Options) {
         }
 
         if (!succeeded) {
+          // TODO: streamingSendErrorProcessing(pageUrl.href, error)
           return Promise.resolve({results: [], nextPages: []});
         }
       };
@@ -150,12 +151,6 @@ async function main(streaming: boolean, rootURL: URL, opts: Options) {
 
       // NOTE: We trasnform from a URL to href for storage, see the reasons in Set above
       pagesToVisit.forEach(page => PAGES_TO_VISIT.add(page.href));
-
-      // TODO: Format the results here somehow?
-      // TODO: Output to TAP, so that we can transform/format with more standard tools
-      // Alternative, after everything is gathered, run a reportResults(results)
-      // log.log('Results', RESULTS);
-      // log.log('Next pages', pagesToVisit);
     }
   }
 
@@ -167,10 +162,13 @@ async function main(streaming: boolean, rootURL: URL, opts: Options) {
   const reportFileName = `report-${runId}.json`;
   const stateFileName = `state-${runId}.json`;
 
+  // Write report
   await writeFile(reportFileName, JSON.stringify(RESULTS, null, 2), 'utf8');
-  // TODO: Add "WroteReport" to "results" stream here
-  log.info(`Wrote ${reportFileName}`);
 
+  log.info(`Wrote ${reportFileName}`);
+  streamingSendWroteReportFile(streaming, reportFileName);
+
+  // Write serialized state
   const stateObj = {
     entry: rootURL.href,
     options: opts,
@@ -183,6 +181,7 @@ async function main(streaming: boolean, rootURL: URL, opts: Options) {
 
   await writeFile(stateFileName, JSON.stringify(stateObj, null, 2), 'utf8');
   log.info(`Wrote ${stateFileName}`);
+  streamingSendWroteStateFile(streaming, stateFileName);
 }
 
 async function processPage(browser: Browser, pageUrl: URL) {
@@ -332,6 +331,24 @@ function shouldProcess(
 function streamingSendInProgress(streaming: boolean, href: string) {
   if (streaming) {
     resultLog.info({msg: 'InProgress', href});
+  }
+}
+
+function streamingSendWroteReportFile(streaming: boolean, filename: string) {
+  if (streaming) {
+    resultLog.info({
+      msg: 'DisplayInfo',
+      description: `Wrote the report to ${filename}. You can view it again with\n\`$ accessible-pipeline view --file ${filename}\`.`,
+    });
+  }
+}
+
+function streamingSendWroteStateFile(streaming: boolean, filename: string) {
+  if (streaming) {
+    resultLog.info({
+      msg: 'DisplayInfo',
+      description: `Wrote the state to ${filename}. It might me useful if you want to debug which pages were visited.`,
+    });
   }
 }
 

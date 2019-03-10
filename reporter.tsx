@@ -21,11 +21,17 @@ type MessageFormat =
       msg: 'InProgress';
       module: 'results';
       href: string;
+    }
+  | {
+      msg: 'DisplayInfo';
+      module: 'results';
+      description: string;
     };
 
 type State = {
   inProgress: string[];
   results: AxeResults[];
+  info: string[];
 };
 
 type Action =
@@ -36,6 +42,10 @@ type Action =
   | {
       msg: 'InProgress';
       href: string;
+    }
+  | {
+      msg: 'DisplayInfo';
+      description: string;
     };
 
 const reducer: React.Reducer<State, Action> = (prevState, action) => {
@@ -55,6 +65,12 @@ const reducer: React.Reducer<State, Action> = (prevState, action) => {
         inProgress: [...prevState.inProgress, action.href],
       };
 
+    case 'DisplayInfo':
+      return {
+        ...prevState,
+        info: [...prevState.info, action.description],
+      };
+
     default:
       throw Error('Invalid action type');
   }
@@ -63,7 +79,11 @@ const reducer: React.Reducer<State, Action> = (prevState, action) => {
 const StreamingReporter: React.FunctionComponent<{}> = ({}) => {
   // Consume stdin via context
   const {stdin} = useContext(StdinContext);
-  const [state, dispatch] = useReducer(reducer, {inProgress: [], results: []});
+  const [state, dispatch] = useReducer(reducer, {
+    inProgress: [],
+    results: [],
+    info: [],
+  });
 
   // Subscribe to stdin? (Wtf am I even doing here)
   useEffect(() => {
@@ -84,6 +104,9 @@ const StreamingReporter: React.FunctionComponent<{}> = ({}) => {
           if (value.msg === 'InProgress') {
             dispatch({msg: 'InProgress', href: value.href});
           }
+          if (value.msg === 'DisplayInfo') {
+            dispatch({msg: 'DisplayInfo', description: value.description});
+          }
         }
       } catch (err) {}
     };
@@ -97,15 +120,25 @@ const StreamingReporter: React.FunctionComponent<{}> = ({}) => {
     };
   }, [stdin]);
 
-  return <Reporter inProgress={state.inProgress} results={state.results} />;
+  return (
+    <Reporter
+      inProgress={state.inProgress}
+      results={state.results}
+      info={state.info}
+    />
+  );
 };
 
 // Reporter Component
 
-type ReporterProps = {inProgress: string[]; results: AxeResults[]};
+type ReporterProps = {
+  inProgress: string[];
+  results: AxeResults[];
+  info: string[];
+};
 
 const Reporter: React.FunctionComponent<ReporterProps> = props => {
-  const {results, inProgress} = props;
+  const {results, inProgress, info} = props;
   const pagesPassed = useMemo(
     () =>
       results.filter(res => res.violations && res.violations.length === 0)
@@ -140,12 +173,20 @@ const Reporter: React.FunctionComponent<ReporterProps> = props => {
       ) : null}
 
       {/* Summary */}
-      <Box>
+      <Box marginBottom={1}>
         <Text>Pages:</Text>{' '}
         <Text>
           <Color green>{pagesPassed} had no violations</Color>, {pagesPassed} of{' '}
           {results.length + inProgress.length} total
         </Text>
+      </Box>
+
+      <Box flexDirection="column">
+        {info.map(description => (
+          <Box key={description} marginBottom={1}>
+            <Color blue>{description}</Color>
+          </Box>
+        ))}
       </Box>
     </Box>
   );
@@ -247,7 +288,7 @@ async function main(opts: Options) {
     const reportData = await readFile(opts.reportSource.fileName, 'utf8').then(
       data => JSON.parse(data)
     );
-    render(<Reporter inProgress={[]} results={reportData} />);
+    render(<Reporter inProgress={[]} results={reportData} info={[]} />);
   } else if (opts.reportSource.type === 'stdin') {
     render(<StreamingReporter />);
   }
