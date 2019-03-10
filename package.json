@@ -8,12 +8,12 @@
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "cli-run": "LOG_LEVEL=trace TS_NODE_PRETTY=true ./bin/cli.js run",
-    "production:cli-run": "NODE_ENV=production LOG_LEVEL=info TS_NODE_PRETTY=true ./bin/cli.js run",
-    "cli-view": "TS_NODE_PRETTY=true ./bin/cli.js view",
-    "production:cli-view": "TS_NODE_PRETTY=true ./bin/cli.js view",
+    "cli-run": "LOG_LEVEL=trace ./bin/cli.js run",
+    "production:cli-run": "NODE_ENV=production LOG_LEVEL=info ./bin/cli.js run",
+    "cli-view": "./bin/cli.js view",
+    "production:cli-view": "NODE_ENV=production ./bin/cli.js view",
     "watch": "tsc --watch --pretty",
-    "build": "tsc"
+    "build": "NODE_ENV=production tsc"
   },
   "repository": {
     "type": "git",
