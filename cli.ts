@@ -8,10 +8,13 @@ const prog = sade('accessible-pipeline');
 
 prog.version('0.1.0');
 
+// TODO: Print "20% to 40% ... from axe-cli"
+// TODO: Print "saved report to file ..., you can view it again with accessible-pipeline view report-XZY.json"
+
 prog
   .command('run <url>')
   .describe(
-    'Run the crawler starting from a given URL, reporting issues along the way.'
+    'Run the crawler starting from a given URL, reporting issues along the way. Saves the report to a file.'
   )
   .example('run https://example.com')
   .option(
@@ -36,14 +39,26 @@ prog
     '--ignoreExtensions',
     'A comma-separated list of extensions to ignore. Useful for avoiding certain non-html links.'
   )
-  .option('--ci', 'Exits 1 on error, outputs only operational logs.')
+  .option(
+    '--ci',
+    'Output computer-centric operational logs. Exit (1) on error.'
+  )
   .option(
     '--streaming',
     'Output specific information on stdout under the "results" module. Use together with `accessible-pipeline view --streaming`, to display a live reporter.'
   )
   .action((url: string, opts: run.CLIOptions) => {
-    // If CI is specified, ditch the reporter and output the regular JSON
-    if (opts.ci) {
+    // Disallow DEBUG_LOG_PRETTY and --streaming. It is most likely an accident.
+    if (process.env.DEBUG_LOG_PRETTY === 'true' && opts.streaming) {
+      console.log(
+        '  ERROR\n    You cannot set DEBUG_LOG_PRETTY and --streaming, because --streaming relies on the JSON output.\n    If you want to debug only the process output consider setting --ci and not --streaming.'
+      );
+      process.exit(1);
+    }
+
+    // If ci or streaming is specified, only output pino's NDJSON
+    // --streaming is a superset of --ci, because it outputs the JSON *and* the extra 'results' log
+    if (opts.ci || opts.streaming) {
       let ignoreExtensions;
       if (opts.ignoreExtensions) {
         // TODO: Do some more validation here
@@ -54,14 +69,23 @@ prog
       }
       run.cliEntry(url, {...opts, ignoreExtensions});
     } else {
-      console.log(process.argv.slice(3));
-      const run = spawn('ts-node', [
-        ...process.argv.slice(1),
+      // If not in CI, set up two processes: a runner and a reporter
+      // The runner is the `run` command with --ci and --streaming, and other options forwarded
+      // The reporter is the `view` command with --streaming
+      // Pipe the output of the first into the second, and forward that to
+      // the terminal
+      const run = spawn('./bin/cli.js', [
+        // Forward the existing arguments
+        ...process.argv.slice(2),
+        // Append --ci and --streaming
         '--ci',
         '--streaming',
       ]);
-      const view = spawn('ts-node', ['cli.ts', 'view', '--streaming']);
+      // NOTE: We also append --color, to force chalk to show colours
+      // TODO: If this becomes an issue, we can instead forward a --no-color option from above
+      const view = spawn('./bin/cli.js', ['view', '--streaming', '--color']);
 
+      // Pipe one process into another, and then out into our terminal
       run.stdout.pipe(view.stdin);
       view.stdout.pipe(process.stdout);
     }
@@ -88,24 +112,3 @@ prog
   });
 
 prog.parse(process.argv);
-
-const description = `
-  accessible-pipeline
-    run [entry URL]
-      --pageLimit
-      --maxRetries
-      --routeManifestPath
-      --ignoreFragmentLinks
-      --ignoreExtensions
-      --ci (prints computer-centric output, without the reporter; exits (1) on any failure)
-      --pretty (prettifies the output; different from the reporter)
-      --streamable
-
-      By default, it shows the report by setting (streamable=true) and piping in to the reporter.
-      Saves the report to a file.
-      TODO: Print "20% to 40%"
-      TODO: Print "saved report to file ..., you can view it again with accessible-pipeline view report-XZY.json"
-
-    view [report path]
-      View a report output by accessible-pipeline run
-`;

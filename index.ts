@@ -11,7 +11,7 @@ import matchit from 'matchit';
 // Create a child logger scoped to the module
 const log = logger.child({module: 'root'});
 
-// Create a logger for results
+// Create a logger for results. This is the one that gets consumed by streaming reporters.
 const resultLog = logger.child({module: 'results'});
 
 // Promise-friendly core fns
@@ -168,6 +168,7 @@ async function main(streaming: boolean, rootURL: URL, opts: Options) {
   const stateFileName = `state-${runId}.json`;
 
   await writeFile(reportFileName, JSON.stringify(RESULTS, null, 2), 'utf8');
+  // TODO: Add "WroteReport" to "results" stream here
   log.info(`Wrote ${reportFileName}`);
 
   const stateObj = {

@@ -7,3 +7,4 @@ report.json
 report-*.json
 state-*.json
 routes.json
+bin/
