@@ -51,7 +51,7 @@ type Options = {
  * The core function that runs assertions on the provided URLs, but does not touch the filesystem.
  * Used as the main export of the module, for programatic use.
  */
-async function runCore(rootURL: URL, opts: Options) {
+export async function runCore(rootURL: URL, opts: Options) {
   // Load RouteManifest, if specified
   // TODO: Consider a union for this
   let ROUTE_MANIFEST;
