@@ -33,15 +33,25 @@ const readFile = promisify(fs.readFile);
 // Common options for excluding links to visit
 // For example *.pdf and #heading-link came up often in early iterations
 type Options = {
-  // TODO: entry: string | Array<string>
+  /* The maximum number of pages to visit */
   pageLimit: number;
+  /* The maximum number of retries for a failing page */
   maxRetries?: number;
+  /* Whether to ignore links of the shape https://example.com#my-id */
   ignoreFragmentLinks?: boolean;
+  /* A list of extensions to ignore, skipping pages */
   ignoreExtensions?: Array<string>;
+  /* A path to a route manifest file, used to de-duplicate visited pages and routes */
   routeManifestPath?: string;
+  /* Whether to expose the streaming logging API, used for advanced, "live" reporters */
+  streaming?: boolean;
 };
 
-async function main(streaming: boolean, rootURL: URL, opts: Options) {
+/**
+ * The core function that runs assertions on the provided URLs, but does not touch the filesystem.
+ * Used as the main export of the module, for programatic use.
+ */
+async function runCore(rootURL: URL, opts: Options) {
   // Load RouteManifest, if specified
   // TODO: Consider a union for this
   let ROUTE_MANIFEST;
@@ -108,7 +118,7 @@ async function main(streaming: boolean, rootURL: URL, opts: Options) {
       log.info('Will process', pageUrl.href);
 
       // Also add "in progress" to the result log
-      streamingSendInProgress(streaming, pageUrl.href);
+      streamingSendInProgress(pageUrl.href, opts.streaming);
 
       // TODO: streamingSendReportError(streaming, {href: pageUrl.href, error: err});
 
@@ -152,7 +162,7 @@ async function main(streaming: boolean, rootURL: URL, opts: Options) {
       RESULTS = RESULTS.concat(results);
 
       // Send a 'GotResults' message on the streaming channel
-      streamingSendGotResults(streaming, results);
+      streamingSendGotResults(results, opts.streaming);
 
       // Remove any visited pages, and add the rest to the ones to visit
       const pagesToVisit = getPagesToVisit(nextPages, PAGES_VISITED, opts);
@@ -162,19 +172,8 @@ async function main(streaming: boolean, rootURL: URL, opts: Options) {
     }
   }
 
-  // Close the browser and write reports and state
+  // Close the browser and return reports and state
   await browser.close();
-
-  // Some sort of id for the run
-  const runId = Date.now();
-  const reportFileName = `report-${runId}.json`;
-  const stateFileName = `state-${runId}.json`;
-
-  // Write report
-  await writeFile(reportFileName, JSON.stringify(RESULTS, null, 2), 'utf8');
-
-  log.info(`Wrote ${reportFileName}`);
-  streamingSendWroteReportFile(streaming, reportFileName);
 
   // Write serialized state
   const stateObj = {
@@ -187,9 +186,28 @@ async function main(streaming: boolean, rootURL: URL, opts: Options) {
     toVisit: Array.from(PAGES_TO_VISIT.keys()),
   };
 
-  await writeFile(stateFileName, JSON.stringify(stateObj, null, 2), 'utf8');
+  return {results: RESULTS, state: stateObj};
+}
+
+async function main(rootURL: URL, opts: Options) {
+  // Run the core functionality
+  const {results, state} = await runCore(rootURL, opts);
+
+  // Write reports and state
+
+  // Generate some sort of id for the run
+  const runId = Date.now();
+  const reportFileName = `report-${runId}.json`;
+  const stateFileName = `state-${runId}.json`;
+
+  // Write report
+  await writeFile(reportFileName, JSON.stringify(results, null, 2), 'utf8');
+  log.info(`Wrote ${reportFileName}`);
+  streamingSendWroteReportFile(reportFileName, opts.streaming);
+
+  await writeFile(stateFileName, JSON.stringify(state, null, 2), 'utf8');
   log.info(`Wrote ${stateFileName}`);
-  streamingSendWroteStateFile(streaming, stateFileName);
+  streamingSendWroteStateFile(stateFileName, opts.streaming);
 }
 
 async function processPage(browser: Browser, pageUrl: URL) {
@@ -336,13 +354,13 @@ function shouldProcess(
 //
 // STREAMING
 
-function streamingSendInProgress(streaming: boolean, href: string) {
+function streamingSendInProgress(href: string, streaming?: boolean) {
   if (streaming) {
     resultLog.info({msg: 'InProgress', href});
   }
 }
 
-function streamingSendWroteReportFile(streaming: boolean, filename: string) {
+function streamingSendWroteReportFile(filename: string, streaming?: boolean) {
   if (streaming) {
     resultLog.info({
       msg: 'DisplayInfo',
@@ -351,7 +369,7 @@ function streamingSendWroteReportFile(streaming: boolean, filename: string) {
   }
 }
 
-function streamingSendWroteStateFile(streaming: boolean, filename: string) {
+function streamingSendWroteStateFile(filename: string, streaming?: boolean) {
   if (streaming) {
     resultLog.info({
       msg: 'DisplayInfo',
@@ -360,7 +378,7 @@ function streamingSendWroteStateFile(streaming: boolean, filename: string) {
   }
 }
 
-function streamingSendGotResults(streaming: boolean, results: AxeResults) {
+function streamingSendGotResults(results: AxeResults, streaming?: boolean) {
   // Write to the results stream, after rewriting results to only keep the node targets
   // Helps avoid some odd edge cases where the JSON breaks parsing when piping, because of the HTML content
   // TODO: Declare StreamingAxeResults type, which matches the shape we actually send.
@@ -413,7 +431,7 @@ export type CLIOptions = Options & {
 // TODO: Accept multiple roots in the future
 export function cliEntry(rootHref: string, opts: CLIOptions) {
   // Whether to output a results stream under resultsLog
-  const {streaming, ...options} = opts;
+  const {ci, ...options} = opts;
 
   // Read the url as the first CLI argument
   let rootURL: URL;
@@ -428,7 +446,7 @@ export function cliEntry(rootHref: string, opts: CLIOptions) {
     process.exit(1);
   }
 
-  main(streaming, rootURL!, options).catch(err => {
+  main(rootURL!, options).catch(err => {
     // TODO: Consider other ways of reporting errors here
     log.fatal('The process encountered an unrecoverable error: ', err);
     process.exit(1);

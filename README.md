@@ -88,6 +88,58 @@ On the other hand, if you run `run` standalone (without `--ci`), then we assume 
 Regardless of how you invoke `run`, the final `state` and `report` are written to a file.
 This allows you to consume the reports in other ways, such as by building a static site, running `accessible-pipeline view --file`, or however you wish!
 
+## Programmatic Use
+
+The main documentation so far was about CLI use.
+Typically, building things on top of the reports is possible by reading in the output `report-xyz.json` file.
+For more integrated use cases, however, we also provide a programmatic API.
+It exposes the core run loop, without touching the filesystem.
+
+You can use it via the `runCore` function:
+
+```js
+import {runCore} from 'accessible-pipeline';
+
+async function main() {
+  const url = new URL('https://example.com/');
+  const {results, state} = await runCore(url, {
+    /* Options */
+  });
+  // Some time later...
+  // Do something with results here
+}
+```
+
+Where the types are:
+
+```ts
+async function runCore(
+  rootURL: URL,
+  opts: Options
+): Promise<{
+  results: AxeResults[];
+  state: State;
+}>;
+
+type Options = {
+  /* The maximum number of pages to visit */
+  pageLimit: number;
+  /* The maximum number of retries for a failing page */
+  maxRetries?: number;
+  /* Whether to ignore links of the shape https://example.com#my-id */
+  ignoreFragmentLinks?: boolean;
+  /* A list of extensions to ignore, skipping pages */
+  ignoreExtensions?: Array<string>;
+  /* A path to a route manifest file, used to de-duplicate visited pages and routes */
+  routeManifestPath?: string;
+  /* Whether to expose the streaming logging API, used for advanced, "live" reporters */
+  streaming?: boolean;
+};
+```
+
+Our own main "CLI" runner, is written on top of `runCore`.
+In the future, we might provide an async iterator API, that allows you to process each page of results as they come in, instead of having to wait for the full set.
+
 ## Roadmap
 
 ## Contributing
