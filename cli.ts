@@ -6,7 +6,7 @@ import * as report from './src/report';
 
 const prog = sade('accessible-pipeline');
 
-prog.version('0.1.0');
+prog.version('0.4.0');
 
 // TODO: Print "20% to 40% ... from axe-cli"
 // TODO: Print "saved report to file ..., you can view it again with accessible-pipeline view report-XZY.json"
