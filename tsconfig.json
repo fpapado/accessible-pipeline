@@ -1,8 +1,8 @@
 {
-  "include": ["cli.ts"],
+  "include": ["cli.ts", "src/**/*.ts"],
   "compilerOptions": {
     "paths": {"*": ["types/*"]},
-    "outDir": "bin",
+    "outDir": "dist",
     "module": "commonjs",
     "target": "es2018",
     "declaration": true,

@@ -82,7 +82,7 @@ prog
       // The reporter is the `view` command with --streaming
       // Pipe the output of the first into the second, and forward that to
       // the terminal
-      const run = spawn('./bin/cli.js', [
+      const run = spawn('./dist/cli.js', [
         // Forward the existing arguments
         'run',
         ...process.argv.slice(3),
@@ -92,7 +92,7 @@ prog
       ]);
       // NOTE: We also append --color, to force chalk to show colours
       // TODO: If this becomes an issue, we can instead forward a --no-color option from above
-      const view = spawn('./bin/cli.js', ['view', '--streaming', '--color']);
+      const view = spawn('./dist/cli.js', ['view', '--streaming', '--color']);
 
       // Pipe one process into another, and then out into our terminal
       run.stdout.pipe(view.stdin);
