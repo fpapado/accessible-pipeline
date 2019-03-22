@@ -163,7 +163,6 @@ export async function runCore(rootURL: URL, opts: Options) {
       const runAttempt = await attemptRun();
       let results = runAttempt!.results as AxeResults;
       let nextPages = runAttempt!.nextPages;
-      log.info({results, nextPages});
 
       // Append the results to the list
       // TODO: Could instead opt to return the results as a stream, and decide where to write in the consumer

@@ -1,4 +1,4 @@
-const {runCore} = require('../src/run');
+const {runCore} = require('..');
 const fs = require('fs');
 const {promisify} = require('util');
 
