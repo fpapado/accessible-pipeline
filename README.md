@@ -110,6 +110,8 @@ async function main() {
 }
 ```
 
+You can find a full example under [examples/programmatic-use.js](./examples/programmatic-use.js);
+
 Where the types are:
 
 ```ts
