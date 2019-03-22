@@ -4,13 +4,10 @@ import * as core from './core';
 import * as streaming from './streaming';
 import {logger} from './logger';
 
-// Promise-friendly core fns
 const writeFile = promisify(fs.writeFile);
 
-// Create a child logger scoped to the module
-const log = logger.child({module: 'run'});
+const log = logger.child({module: 'external'});
 
-/** Code backing the "run" CLI command */
 async function main(rootURL: URL, opts: core.Options) {
   // Run the core functionality
   const {results, state} = await core.runCore(rootURL, opts);
@@ -32,35 +29,19 @@ async function main(rootURL: URL, opts: core.Options) {
   streaming.sendWroteStateFile(stateFileName, opts.streaming);
 }
 
-//
-// CLI
-
-export type CLIOptions = core.Options & {
-  streaming: boolean;
-  ci: boolean;
+const rootURL = new URL('https://worldtour.fiba3x3.com/2018');
+const opts = {
+  pageLimit: 5,
 };
 
-// TODO: Accept multiple roots in the future
-export function cliEntry(rootHref: string, opts: CLIOptions) {
-  // Whether to output a results stream under resultsLog
-  const {ci, ...options} = opts;
-
-  // Read the url as the first CLI argument
-  let rootURL: URL;
-
-  try {
-    rootURL = new URL(rootHref);
-  } catch (err) {
-    log.fatal(
-      'The URL you provided was in an unexpected format: ',
-      err.toString()
-    );
-    process.exit(1);
-  }
-
-  main(rootURL!, options).catch(err => {
-    // TODO: Consider other ways of reporting errors here
-    log.fatal('The process encountered an unrecoverable error: ', err);
-    process.exit(1);
-  });
+export function cliEntry() {
+  main(rootURL, opts)
+    .then(x => {
+      console.log('Done');
+    })
+    .catch(err => {
+      log.fatal('Deaded');
+    });
 }
+
+cliEntry();
