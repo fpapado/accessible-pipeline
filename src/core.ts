@@ -92,7 +92,7 @@ export async function runCore(rootURL: URL, opts: Options) {
   // TODO: Consider Depth-First Search vs. Breadth-First Search
   for (const pageHref of PAGES_TO_VISIT) {
     // First, convert to a URL (if we have gotten this from the scripts below, this is OK)
-    const pageUrl = new URL(pageHref);
+    let pageUrl = new URL(pageHref);
 
     // Double check that the page has not been visited (might come into play for concurrency)
     const {shouldProcess: shouldRun, reason} = shouldProcess(
@@ -155,7 +155,7 @@ export async function runCore(rootURL: URL, opts: Options) {
 
         if (!succeeded) {
           // TODO: streamingSendErrorProcessing(pageUrl.href, error)
-          return Promise.resolve({results: [], nextPages: []});
+          return {results: [], nextPages: []};
         }
       };
 
