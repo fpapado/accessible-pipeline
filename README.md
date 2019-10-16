@@ -1,5 +1,7 @@
 # Accessible Pipeline
 
+[![CircleCI](https://circleci.com/gh/fpapado/accessible-pipeline.svg?style=svg)](https://circleci.com/gh/fpapado/accessible-pipeline)
+
 > Accessibility on CI, made easy.
 
 ## Motivation
@@ -177,4 +179,3 @@ Any person contributing to this project is required to [abide by our Code of Con
 ## Thanks and Inspiration
 
 Thanks to [Deque](https://www.deque.com), for [axe-core](https://github.com/dequelabs/axe-core) and [axe-puppeteer](https://github.com/dequelabs/axe-puppeteer)
-
