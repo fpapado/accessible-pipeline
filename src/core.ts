@@ -46,16 +46,83 @@ export type Options = {
   puppeteerChromeLaunchArgs?: puppeteer.LaunchOptions['args'];
 };
 
+type CoreReturnValue =
+  | {type: 'state'; data: StateData}
+  | {type: 'results'; data: AxeResults};
+
+type StateData = {
+  entry: string;
+  options: Options;
+  run: number;
+  routes: any;
+  pagesVisited: string[];
+  routesVisited: string[];
+  toVisit: string[];
+};
+
 const defaultOpts: Partial<Options> = {
   maxRetries: 5,
   puppeteerChromeLaunchArgs: [],
 };
 
 /**
- * The core function that runs assertions on the provided URLs, but does not touch the filesystem.
- * Used as the main export of the module, for programatic use.
+ * Runs the assertions at the URL with options, and returns them all at once.
+ *
+ * This version is simpler to use (you await it), but it might have memory
+ * pressure issues.
+ *
+ * An alternative is runCoreStreaming, which returns results one-at-a-time.
  */
 export async function runCore(rootURL: URL, opts: Options) {
+  let state: StateData | {} = {};
+  let results: AxeResults[] = [];
+
+  // What a syntax!
+  for await (const msg of runCoreStreaming(rootURL, opts)) {
+    if (msg.type === 'state') {
+      state = msg.data;
+    }
+    if (msg.type === 'results') {
+      results.push(msg.data);
+    }
+  }
+  return {state, results};
+}
+
+/**
+ * Runs the assertions at the URL with options, and returns them one-at-a-time,
+ * as an async iterable.
+ *
+ * This version allows you to process results at your own pace, which can be
+ * good for memory pressure, as well as implementing other streaming interfaces
+ * on top.
+ *
+ * An alternative is runCore, which buffers / collects the results instead.
+ *
+ * @see https://2ality.com/2016/10/asynchronous-iteration.html
+ * @see http://javascript.info/async-iterators-generators
+ */
+export function runCoreStreaming(rootURL: URL, opts: Options) {
+  return {
+    [Symbol.asyncIterator]() {
+      return runCoreStreamingInternal(rootURL, opts);
+    },
+  };
+}
+
+/**
+ * The core function that runs assertions on the provided URLs,
+ * but does not touch the filesystem.
+ *
+ * It returns results one-at-a-time, using generators.
+ *
+ * @see https://2ality.com/2016/10/asynchronous-iteration.html
+ * @see http://javascript.info/async-iterators-generators
+ */
+async function* runCoreStreamingInternal(
+  rootURL: URL,
+  opts: Options
+): AsyncGenerator<CoreReturnValue> {
   // Merge default options
   opts = {...defaultOpts, ...opts};
 
@@ -85,7 +152,6 @@ export async function runCore(rootURL: URL, opts: Options) {
   // Wish there was a good hashed set implementation
   // To compensate, we store the string, and transform to/from URL href at the edges
   let PAGES_TO_VISIT = new Set([rootURL.href]);
-  let RESULTS: Array<AxeResults> = [];
 
   log.info('Will run with:', {...opts});
 
@@ -111,9 +177,7 @@ export async function runCore(rootURL: URL, opts: Options) {
     );
 
     log.info(
-      `Page: ${pageUrl.href}. Should process: ${shouldRun}, reason: ${
-        reason.type
-      }`
+      `Page: ${pageUrl.href}. Should process: ${shouldRun}, reason: ${reason.type}`
     );
 
     // Remove from queue if it will not run
@@ -171,8 +235,8 @@ export async function runCore(rootURL: URL, opts: Options) {
       let nextPages = runAttempt!.nextPages;
 
       // Append the results to the list
-      // TODO: Could instead opt to return the results as a stream, and decide where to write in the consumer
-      RESULTS = RESULTS.concat(results);
+      // Yield the current results to the consumer, tagged so they can separate them
+      yield {type: 'results', data: results};
 
       // Send a 'GotResults' message on the streaming channel
       streaming.sendGotResults(results, opts.streaming);
@@ -185,7 +249,7 @@ export async function runCore(rootURL: URL, opts: Options) {
     }
   }
 
-  // Close the browser and return reports and state
+  // Finally, close the browser and return the state
   await browser.close();
 
   // Write serialized state
@@ -199,7 +263,7 @@ export async function runCore(rootURL: URL, opts: Options) {
     toVisit: Array.from(PAGES_TO_VISIT.keys()),
   };
 
-  return {results: RESULTS, state: stateObj};
+  yield {type: 'state', data: stateObj};
 }
 
 async function processPage(browser: Browser, pageUrl: URL) {
