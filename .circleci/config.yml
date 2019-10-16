@@ -23,6 +23,6 @@ jobs:
           environment:
             JEST_JUNIT_OUTPUT: 'test-results/jest/js-test-results.xml'
       - store_test_results:
-        path: test-results/
+          path: test-results/
       - store_artifacts:
-        path: test-results/
+          path: test-results/
