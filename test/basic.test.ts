@@ -8,7 +8,7 @@ describe('basic', () => {
   let server: Server;
   let getUrlForFixture: (filename: string) => string;
 
-  beforeAll(async function() {
+  beforeAll(async done => {
     const app: express.Application = express();
     app.use(express.static(path.resolve(__dirname, 'fixtures', 'basic')));
     server = createServer(app);
@@ -24,10 +24,12 @@ describe('basic', () => {
     getUrlForFixture = (filename: string): string => {
       return `${address}/${filename}`;
     };
+
+    done();
   });
 
-  afterAll(function() {
-    this.server.close();
+  afterAll(done => {
+    server.close(done);
   });
 
   test('visits all pages', async () => {
