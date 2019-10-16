@@ -13,7 +13,8 @@ Furthermore, having a solid series of scripts does not say much about running it
 
 ## Getting started
 
-You will need node and npm.
+You will need [node](https://nodejs.org/en/) and [npm](https://docs.npmjs.com/downloading-and-installing-node-js-and-npm).
+We recommend [using a version manager to install node](https://docs.npmjs.com/downloading-and-installing-node-js-and-npm#using-a-node-version-manager-to-install-nodejs-and-npm). It makes working in different projects easier.
 
 In a console, run:
 
@@ -60,6 +61,27 @@ DEBUG_LOG_PRETTY=true accessible-pipeline run https://example.com --ci
 # Will exit with an error, because --streaming is meant to forward the logs somewhere for a computer to parse, and it would be undefined behaviour
 DEBUG_LOG_PRETTY=true accessible-pipeline run https://example.com --ci --streaming
 ```
+
+## Development
+
+Make sure you follow the [Getting Started](#getting-started) instructions above.
+
+Then, [clone this repository on GitHub](https://help.github.com/en/articles/cloning-a-repository).
+
+Finally, you can install the local dependencies, and run the tests:
+
+```shell
+npm ci
+npm test
+```
+
+When developing, it might help to run tests in watch mode:
+
+```shell
+npm test -- --watch
+```
+
+The main source files are found under `src/`. You can read the [architecture notes](#architeture) below, to learn more about where everything goes.
 
 ## Architecture
 
@@ -148,6 +170,5 @@ In the future, we might provide an async iterator API, that allows you to proces
 
 ## Thanks and Inspiration
 
-- Deque, for axe-core and axe-puppeteer
+- [Deque](https://www.deque.com), for [axe-core](https://github.com/dequelabs/axe-core) and [axe-puppeteer](https://github.com/dequelabs/axe-puppeteer)
 
-## License
