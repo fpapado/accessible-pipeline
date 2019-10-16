@@ -168,7 +168,13 @@ In the future, we might provide an async iterator API, that allows you to proces
 
 ## Contributing
 
+We have a [dedicated Contributing guide](/CONTRIBUTING.md). If you are interested in contributing to the project, please read it and let us know!
+
+## Code of Conduct
+
+Any person contributing to this project is required to [abide by our Code of Conduct](/CODE_OF_CONDUCT.md).
+
 ## Thanks and Inspiration
 
-- [Deque](https://www.deque.com), for [axe-core](https://github.com/dequelabs/axe-core) and [axe-puppeteer](https://github.com/dequelabs/axe-puppeteer)
+Thanks to [Deque](https://www.deque.com), for [axe-core](https://github.com/dequelabs/axe-core) and [axe-puppeteer](https://github.com/dequelabs/axe-puppeteer)
 
