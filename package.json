@@ -8,7 +8,7 @@
   },
   "scripts": {
     "test": "LOG_LEVEL=error jest --test-timeout=10000",
-    "test-ci": "LOG_LEVEL=error jest --ci --runInBand --reporters=default --reporters=jest-junit --test-timeout=10000",
+    "test-ci": "LOG_LEVEL=error jest --ci --max-workers=2 --reporters=default --reporters=jest-junit --test-timeout=10000",
     "cli-run": "LOG_LEVEL=trace ./bin/cli.js run",
     "production:cli-run": "NODE_ENV=production LOG_LEVEL=info ./bin/cli.js run",
     "cli-view": "./bin/cli.js view",
