@@ -20,3 +20,9 @@ jobs:
           name: Run Tests
           # See: https://circleci.com/docs/2.0/collect-test-data/#jest
           command: npm run test-ci
+          environment:
+            JEST_JUNIT_OUTPUT: 'test-results/jest/js-test-results.xml'
+      - store_test_results:
+        path: test-results/
+      - store_artifacts:
+        path: test-results/
