@@ -7,7 +7,8 @@
     "accessible-pipeline": "./dist/cli.js"
   },
   "scripts": {
-    "test": "jest",
+    "test": "LOG_LEVEL=error jest --test-timeout=10000",
+    "test-ci": "LOG_LEVEL=error jest --ci --runInBand --reporters=default --reporters=jest-junit --test-timeout=10000",
     "cli-run": "LOG_LEVEL=trace ./bin/cli.js run",
     "production:cli-run": "NODE_ENV=production LOG_LEVEL=info ./bin/cli.js run",
     "cli-view": "./bin/cli.js view",
@@ -59,6 +60,7 @@
     "babel-jest": "^24.9.0",
     "express": "^4.17.1",
     "jest": "^24.9.0",
+    "jest-junit": "^8.0.0",
     "prettier": "^1.16.4",
     "ts-node": "^8.0.2",
     "typescript": "^3.3.3333"

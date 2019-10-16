@@ -10,3 +10,4 @@ routes.json
 bin/
 .nvmrc
 .envrc
+junit.xml
