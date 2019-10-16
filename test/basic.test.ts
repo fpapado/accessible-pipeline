@@ -3,6 +3,7 @@ import {createServer, Server} from 'http';
 import express from 'express';
 import {AddressInfo} from 'net';
 import {runCore} from '../src/core';
+import {getChromiumLaunchArgs} from './utils';
 
 describe('basic', () => {
   let server: Server;
@@ -37,6 +38,7 @@ describe('basic', () => {
 
     const {results, state} = await runCore(new URL(url), {
       pageLimit: 3,
+      puppeteerChromeLaunchArgs: getChromiumLaunchArgs(),
     });
 
     const expected = [

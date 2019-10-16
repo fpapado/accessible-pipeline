@@ -42,10 +42,13 @@ export type Options = {
   routeManifestPath?: string;
   /* Whether to expose the streaming logging API, used for advanced, "live" reporters */
   streaming?: boolean;
+  /* List of Chromium flags for Puppeteer launch */
+  puppeteerChromeLaunchArgs?: puppeteer.LaunchOptions['args'];
 };
 
 const defaultOpts: Partial<Options> = {
   maxRetries: 5,
+  puppeteerChromeLaunchArgs: [],
 };
 
 /**
@@ -86,12 +89,10 @@ export async function runCore(rootURL: URL, opts: Options) {
 
   log.info('Will run with:', {...opts});
 
-  // @see https://discuss.circleci.com/t/puppeteer-fails-on-circleci/22650
-  const args = [];
-  if (process.env.CI) {
-    args.push('--no-sandbox', '--disable-setuid-sandbox');
-  }
-  const browser = await puppeteer.launch({args});
+  const browser = await puppeteer.launch({
+    args: opts.puppeteerChromeLaunchArgs,
+  });
+
   let run = 0;
 
   // TODO: Consider Depth-First Search vs. Breadth-First Search
