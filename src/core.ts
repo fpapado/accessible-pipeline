@@ -155,115 +155,121 @@ async function* runCoreStreamingInternal(
 
   log.info('Will run with:', {...opts});
 
+  let run = 0;
+
   const browser = await puppeteer.launch({
     args: opts.puppeteerChromeLaunchArgs,
   });
 
-  let run = 0;
+  try {
+    // TODO: Consider Depth-First Search vs. Breadth-First Search
+    for (const pageHref of PAGES_TO_VISIT) {
+      // First, convert to a URL (if we have gotten this from the scripts below, this is OK)
+      let pageUrl = new URL(pageHref);
 
-  // TODO: Consider Depth-First Search vs. Breadth-First Search
-  for (const pageHref of PAGES_TO_VISIT) {
-    // First, convert to a URL (if we have gotten this from the scripts below, this is OK)
-    let pageUrl = new URL(pageHref);
+      // Double check that the page has not been visited (might come into play for concurrency)
+      const {shouldProcess: shouldRun, reason} = shouldProcess(
+        ROUTE_MANIFEST,
+        ROUTES_VISITED,
+        PAGES_VISITED,
+        opts.pageLimit,
+        run,
+        pageUrl
+      );
 
-    // Double check that the page has not been visited (might come into play for concurrency)
-    const {shouldProcess: shouldRun, reason} = shouldProcess(
-      ROUTE_MANIFEST,
-      ROUTES_VISITED,
-      PAGES_VISITED,
-      opts.pageLimit,
-      run,
-      pageUrl
-    );
+      log.info(
+        `Page: ${pageUrl.href}. Should process: ${shouldRun}, reason: ${reason.type}`
+      );
 
-    log.info(
-      `Page: ${pageUrl.href}. Should process: ${shouldRun}, reason: ${reason.type}`
-    );
-
-    // Remove from queue if it will not run
-    if (!shouldRun) {
-      PAGES_TO_VISIT.delete(pageUrl.href);
-    }
-
-    if (shouldRun) {
-      run++;
-      log.trace('Run', run);
-
-      log.info('Will process', pageUrl.href);
-
-      // Also add "in progress" to the result log
-      streaming.sendInProgress(pageUrl.href, opts.streaming);
-
-      // TODO: streamingSendReportError(streaming, {href: pageUrl.href, error: err});
-
-      // Add to pages visited, remove from queue
-      PAGES_VISITED.add(pageUrl.href);
-      PAGES_TO_VISIT.delete(pageUrl.href);
-
-      // If the reason we selected a page was because of a route, then add that route to the visited set
-      if (reason.type === 'Route') {
-        ROUTES_VISITED.add(reason.route);
+      // Remove from queue if it will not run
+      if (!shouldRun) {
+        PAGES_TO_VISIT.delete(pageUrl.href);
       }
 
-      // Process the page, get results
-      const attemptRun = async () => {
-        log.trace('Inside attemptRun');
-        let succeeded = false;
-        for (let tryCount = 1; tryCount <= opts.maxRetries!; tryCount++) {
-          if (!succeeded) {
-            log.trace(`Attempt ${tryCount} of ${opts.maxRetries}`);
-            try {
-              log.trace('Inside try');
-              const processResults = await processPage(browser, pageUrl);
-              succeeded = true;
-              return processResults;
-            } catch (err) {
-              log.error('There was an error processing the page', err);
+      if (shouldRun) {
+        run++;
+        log.trace('Run', run);
+
+        log.info('Will process', pageUrl.href);
+
+        // Also add "in progress" to the result log
+        streaming.sendInProgress(pageUrl.href, opts.streaming);
+
+        // TODO: streamingSendReportError(streaming, {href: pageUrl.href, error: err});
+
+        // Add to pages visited, remove from queue
+        PAGES_VISITED.add(pageUrl.href);
+        PAGES_TO_VISIT.delete(pageUrl.href);
+
+        // If the reason we selected a page was because of a route, then add that route to the visited set
+        if (reason.type === 'Route') {
+          ROUTES_VISITED.add(reason.route);
+        }
+
+        // Process the page, get results
+        const attemptRun = async () => {
+          log.trace('Inside attemptRun');
+          let succeeded = false;
+          for (let tryCount = 1; tryCount <= opts.maxRetries!; tryCount++) {
+            if (!succeeded) {
+              log.trace(`Attempt ${tryCount} of ${opts.maxRetries}`);
+              try {
+                log.trace('Inside try');
+                const processResults = await processPage(browser, pageUrl);
+                succeeded = true;
+                return processResults;
+              } catch (err) {
+                log.error('There was an error processing the page', err);
+              }
             }
           }
-        }
 
-        if (!succeeded) {
-          // TODO: streamingSendErrorProcessing(pageUrl.href, error)
-          return {results: [], nextPages: []};
-        }
-      };
+          if (!succeeded) {
+            // TODO: streamingSendErrorProcessing(pageUrl.href, error)
+            return {results: [], nextPages: []};
+          }
+        };
 
-      log.info('Will attempt run');
-      const runAttempt = await attemptRun();
-      let results = runAttempt!.results as AxeResults;
-      let nextPages = runAttempt!.nextPages;
+        log.info('Will attempt run');
+        const runAttempt = await attemptRun();
+        let results = runAttempt!.results as AxeResults;
+        let nextPages = runAttempt!.nextPages;
 
-      // Append the results to the list
-      // Yield the current results to the consumer, tagged so they can separate them
-      yield {type: 'results', data: results};
+        // Append the results to the list
+        // Yield the current results to the consumer, tagged so they can separate them
+        yield {type: 'results', data: results};
 
-      // Send a 'GotResults' message on the streaming channel
-      streaming.sendGotResults(results, opts.streaming);
+        // Send a 'GotResults' message on the streaming channel
+        streaming.sendGotResults(results, opts.streaming);
 
-      // Remove any visited pages, and add the rest to the ones to visit
-      const pagesToVisit = getPagesToVisit(nextPages, PAGES_VISITED, opts);
+        // Remove any visited pages, and add the rest to the ones to visit
+        const pagesToVisit = getPagesToVisit(nextPages, PAGES_VISITED, opts);
 
-      // NOTE: We trasnform from a URL to href for storage, see the reasons in Set above
-      pagesToVisit.forEach(page => PAGES_TO_VISIT.add(page.href));
+        // NOTE: We trasnform from a URL to href for storage, see the reasons in Set above
+        pagesToVisit.forEach(page => PAGES_TO_VISIT.add(page.href));
+      }
     }
+
+    // Write serialized state
+    const stateObj = {
+      entry: rootURL.href,
+      options: opts,
+      run: run,
+      routes: ROUTE_MANIFEST,
+      pagesVisited: Array.from(PAGES_VISITED.keys()),
+      routesVisited: Array.from(ROUTES_VISITED.keys()),
+      toVisit: Array.from(PAGES_TO_VISIT.keys()),
+    };
+
+    yield {type: 'state', data: stateObj};
+  } finally {
+    // We must ensure that we close the browser, when the iteration stops.
+    // This can happen either after exhausting the generator, or breaking or returning.
+    // finally is the only way to do this
+    // @see https://jakearchibald.com/2017/async-iterators-and-generators/
+    log.info('Cleaning up');
+    await browser.close();
   }
-
-  // Finally, close the browser and return the state
-  await browser.close();
-
-  // Write serialized state
-  const stateObj = {
-    entry: rootURL.href,
-    options: opts,
-    run: run,
-    routes: ROUTE_MANIFEST,
-    pagesVisited: Array.from(PAGES_VISITED.keys()),
-    routesVisited: Array.from(ROUTES_VISITED.keys()),
-    toVisit: Array.from(PAGES_TO_VISIT.keys()),
-  };
-
-  yield {type: 'state', data: stateObj};
 }
 
 async function processPage(browser: Browser, pageUrl: URL) {
