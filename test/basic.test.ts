@@ -48,7 +48,6 @@ describe('basic', () => {
     ];
 
     // State
-    expect(state.pagesVisited.length).toEqual(3);
     expect(state.pagesVisited).toEqual(expected);
     expect(state.toVisit).toEqual([]);
 
