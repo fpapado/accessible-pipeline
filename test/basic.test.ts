@@ -35,6 +35,7 @@ describe('basic', () => {
 
   test('visits all pages', async () => {
     const url = getUrlForFixture('homepage.html');
+    console.log(getChromiumLaunchArgs());
 
     const {results, state} = await runCore(new URL(url), {
       pageLimit: 3,
@@ -52,7 +53,6 @@ describe('basic', () => {
     expect(state.toVisit).toEqual([]);
 
     // Results
-    expect(results.length).toEqual(3);
     expect(results.map(result => result.url)).toEqual(expected);
   });
 });
