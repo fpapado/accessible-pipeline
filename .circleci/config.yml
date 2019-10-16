@@ -2,6 +2,7 @@ version: 2.1
 jobs:
   build:
     # pre-built images: https://circleci.com/docs/2.0/circleci-images/
+    # see also: https://github.com/GoogleChrome/puppeteer/blob/master/docs/troubleshooting.md#running-puppeteer-on-circleci
     docker:
       - image: circleci/node:12-browsers
     steps:
