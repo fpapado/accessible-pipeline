@@ -37,6 +37,8 @@ export type Options = {
   ignoreFragmentLinks?: boolean;
   /* A list of extensions to ignore, skipping pages */
   ignoreExtensions?: Array<string>;
+  /* Wheter to ignore links of the shape https://example.com/?a=b */
+  ignoreQueryParams?: boolean;
   /* A path to a route manifest file, used to de-duplicate visited pages and routes */
   routeManifestPath?: string;
   /* Whether to expose the streaming logging API, used for advanced, "live" reporters */
@@ -306,6 +308,7 @@ async function gatherNextPages(currentPageUrl: URL, pageObj: Page) {
    * @example new URL('/en/page', 'https://example.com/otherpage').href === 'https://example.com/en/page
    * @example new URL('https://otherexample.com/en/page', 'https://example.com').href !== 'https://example.com/en/page
    */
+
   const relevantUrls = linkUrls
     .map(url => new URL(url, currentPageUrl))
     .filter(url => url.origin === currentPageUrl.origin);
@@ -337,6 +340,14 @@ function getPagesToVisit(
       if (options.ignoreFragmentLinks) {
         // Reject if there is a fragment
         return !url.hash;
+      }
+      // Pass through otherwise
+      return true;
+    })
+    .filter(url => {
+      if (options.ignoreQueryParams) {
+        // Reject if there are query params
+        return !url.search;
       }
       // Pass through otherwise
       return true;

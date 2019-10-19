@@ -36,6 +36,10 @@ prog
     'Whether to ignore visiting fragment (#) links. Useful for avoiding in-page links.'
   )
   .option(
+    '--ignoreQueryParams',
+    'Wheter to ignore visiting links with query parameters.'
+  )
+  .option(
     '--ignoreExtensions',
     'A comma-separated list of extensions to ignore. Useful for avoiding certain non-html links.'
   )
