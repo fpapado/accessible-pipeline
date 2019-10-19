@@ -8,6 +8,8 @@ const prog = sade('accessible-pipeline');
 
 prog.version('0.5.0');
 
+const defaultPageLimit: number = 20
+
 // TODO: Print "20% to 40% ... from axe-cli"
 // TODO: Print "saved report to file ..., you can view it again with accessible-pipeline view report-XZY.json"
 
@@ -19,8 +21,7 @@ prog
   .example('run https://example.com')
   .option(
     '--pageLimit',
-    'The maximum number of pages to crawl. Used to prevent long runs.',
-    20
+    'The maximum number of pages to crawl. Used to prevent long runs. The default is ' + defaultPageLimit + '.'
   )
   .option(
     '--maxRetries',
@@ -48,6 +49,14 @@ prog
     'Output specific information on stdout under the "results" module. Use together with `accessible-pipeline view --streaming`, to display a live reporter.'
   )
   .action((url: string, opts: run.CLIOptions) => {
+    // If the page limit is not specified, output warning and use default value
+    if (!opts.pageLimit) {
+      console.log(
+        '  WARNING\n    Running with the default maximum of ' + defaultPageLimit + ' pages.'
+      );
+      opts.pageLimit = defaultPageLimit  
+    }
+
     // Disallow DEBUG_LOG_PRETTY and --streaming. It is most likely an accident.
     if (process.env.DEBUG_LOG_PRETTY === 'true' && opts.streaming) {
       console.log(
