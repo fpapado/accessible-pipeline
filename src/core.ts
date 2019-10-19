@@ -300,7 +300,6 @@ async function gatherNextPages(currentPageUrl: URL, pageObj: Page) {
     anchors.map(a => a.getAttribute('href'))
   );
 
-
   // Convert a URL to an absolute url, if it is relative, then filter by origin
   /*
    * @example new URL('/en/page', 'https://example.com').href === 'https://example.com/en/page
