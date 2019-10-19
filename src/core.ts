@@ -1,7 +1,6 @@
 import puppeteer, {Browser, Page} from 'puppeteer';
 import {AxePuppeteer} from 'axe-puppeteer';
 import {AxeResults} from 'axe-core';
-import cheerio from 'cheerio';
 import fs from 'fs';
 import path from 'path';
 import {promisify} from 'util';
@@ -297,10 +296,9 @@ async function analysePage(pageObj: Page) {
 
 async function gatherNextPages(currentPageUrl: URL, pageObj: Page) {
   // Gather all links on a page
-  const htmlContent = await pageObj.content();
-  const $ = cheerio.load(htmlContent);
-  const links = $(`a`);
-  const linkUrls = links.map((i, link) => link.attribs['href']).get();
+  const linkUrls = await pageObj.$$eval(`a`, anchors =>
+    anchors.map(a => a.getAttribute('href'))
+  );
 
   // Convert a URL to an absolute url, if it is relative, then filter by origin
   /*
