@@ -156,6 +156,8 @@ type Options = {
   ignoreFragmentLinks?: boolean;
   /* A list of extensions to ignore, skipping pages */
   ignoreExtensions?: Array<string>;
+  /* Wheter to ignore links of the shape https://example.com/?a=b */
+  ignoreQueryParams?: boolean;
   /* A path to a route manifest file, used to de-duplicate visited pages and routes */
   routeManifestPath?: string;
   /* Whether to expose the streaming logging API, used for advanced, "live" reporters */
