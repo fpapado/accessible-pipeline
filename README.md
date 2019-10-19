@@ -18,10 +18,14 @@ Furthermore, having a solid series of scripts does not say much about running it
 You will need [node](https://nodejs.org/en/) and [npm](https://docs.npmjs.com/downloading-and-installing-node-js-and-npm).
 We recommend [using a version manager to install node](https://docs.npmjs.com/downloading-and-installing-node-js-and-npm#using-a-node-version-manager-to-install-nodejs-and-npm). It makes working in different projects easier.
 
-In a console, run:
+If you want to dive into the code and develop changes, please refer to the [Development section](#development).
+
+If you want to run the module (for example, to check a website), then follow the instructions here.
+
+Install the package:
 
 ```shell
-npm install accessible-pipeline
+npm install -g accessible-pipeline
 ```
 
 Run the crawler with a url:
@@ -34,6 +38,12 @@ View a stored report:
 
 ```shell
 accessible-pipeline view --file report-XYZ.json
+```
+
+You can also run the package without installing it globally:
+
+```shell
+npx accessible-pipeline run https://example.com
 ```
 
 ## Report Format
