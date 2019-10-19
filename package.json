@@ -15,7 +15,7 @@
     "production:cli-view": "NODE_ENV=production ./bin/cli.js view",
     "watch": "tsc --watch --pretty",
     "build": "NODE_ENV=production tsc",
-    "docs-build": "typedoc --plugin typedoc-plugin-markdown --ignoreCompilerErrors --out docs src"
+    "docs-build": "typedoc ./cli.ts"
   },
   "repository": {
     "type": "git",
