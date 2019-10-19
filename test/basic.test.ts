@@ -45,6 +45,30 @@ describe('basic', () => {
       getUrlForFixture('homepage.html'),
       getUrlForFixture('posts.html'),
       getUrlForFixture('about.html'),
+      getUrlForFixture('?x=1'),
+    ];
+
+    // State
+    expect(state.pagesVisited).toEqual(expected);
+    expect(state.toVisit).toEqual([]);
+
+    // Results
+    expect(results.map(result => result.url)).toEqual(expected);
+  });
+
+  test('links with query parameters are ignored', async () => {
+    const url = getUrlForFixture('homepage.html');
+
+    const {results, state} = await runCore(new URL(url), {
+      pageLimit: Infinity,
+      puppeteerChromeLaunchArgs: getChromiumLaunchArgs(),
+      ignoreQueryParams: true,
+    });
+
+    const expected = [
+      getUrlForFixture('homepage.html'),
+      getUrlForFixture('posts.html'),
+      getUrlForFixture('about.html'),
     ];
 
     // State
