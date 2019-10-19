@@ -36,6 +36,14 @@ View a stored report:
 accessible-pipeline view --file report-XYZ.json
 ```
 
+By default, a maximum of 20 pages are crawled, to avoid accidentally bombing a site. Be careful not to set this value too high.
+
+To change the maximum number of pages crawled to 40:
+
+```shell
+accessible-pipeline run https://example.com --pageLimit 40
+```
+
 ## Report Format
 
 The Report is a JSON list of the AxE results. Each entry has a list of violations, passes etc. It also has a `url`.
