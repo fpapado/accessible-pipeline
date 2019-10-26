@@ -296,7 +296,10 @@ async function analysePage(pageObj: Page) {
   return await new AxePuppeteer(pageObj).analyze();
 }
 
-async function gatherNextPages(currentPageUrl: URL, pageObj: Page) {
+async function gatherNextPages(
+  currentPageUrl: URL,
+  pageObj: Page
+): Promise<URL[]> {
   // Gather all links on a page
   const linkUrls = await pageObj.$$eval(`a`, anchors =>
     anchors.map(a => a.getAttribute('href'))
@@ -308,10 +311,11 @@ async function gatherNextPages(currentPageUrl: URL, pageObj: Page) {
    * @example new URL('/en/page', 'https://example.com/otherpage').href === 'https://example.com/en/page
    * @example new URL('https://otherexample.com/en/page', 'https://example.com').href !== 'https://example.com/en/page
    */
-
   const relevantUrls = linkUrls
-    .map(url => new URL(url, currentPageUrl))
-    .filter(url => url.origin === currentPageUrl.origin);
+    .map(url => (url !== null ? new URL(url, currentPageUrl) : null))
+    .filter(
+      url => url !== null && url.origin === currentPageUrl.origin
+    ) as URL[];
 
   return relevantUrls;
 }
@@ -320,7 +324,7 @@ function getPagesToVisit(
   urls: Array<URL>,
   visited: Set<string>,
   options: Options
-) {
+): URL[] {
   // TODO: We could some fancy things here, such as:
   //  - having a maximumDepth counter
   //  - some other metric / heuristic?
