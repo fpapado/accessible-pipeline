@@ -15,7 +15,7 @@ Furthermore, having a solid series of scripts does not say much about running it
 
 ## Getting started
 
-You will need [node](https://nodejs.org/en/) and [npm](https://docs.npmjs.com/downloading-and-installing-node-js-and-npm).
+You will need [node](https://nodejs.org/en/) and [npm](https://docs.npmjs.com/downloading-and-installing-node-js-and-npm). Npm typically comes installed with Node.
 We recommend [using a version manager to install node](https://docs.npmjs.com/downloading-and-installing-node-js-and-npm#using-a-node-version-manager-to-install-nodejs-and-npm). It makes working in different projects easier.
 
 If you want to dive into the code and develop changes, please refer to the [Development section](#development).
@@ -24,6 +24,24 @@ If you want to run the module (for example, to check a website), then follow the
 
 Install the package:
 
+1) Option 1: using npx
+
+npx is a utility provided by npm, that allows you to run scripts directly, without installing them globally. If you have npm installed, you most likely have npx already.
+
+In a terminal, run:
+
+```shell
+npx accessible-pipeline run https://example.com --ci
+```
+
+After the script is done, you can view the report:
+
+```shell
+npx accessible-pipeline view --file report-XYZ.json
+```
+
+2) Option 2: Installing globally and running
+
 ```shell
 npm install -g accessible-pipeline
 ```
@@ -31,7 +49,7 @@ npm install -g accessible-pipeline
 Run the crawler with a url:
 
 ```shell
-accessible-pipeline run https://example.com
+accessible-pipeline run https://example.com --ci
 ```
 
 View a stored report:
@@ -46,12 +64,6 @@ To change the maximum number of pages crawled to 40:
 
 ```shell
 accessible-pipeline run https://example.com --pageLimit 40
-```
-
-You can also run the package without installing it globally:
-
-```shell
-npx accessible-pipeline run https://example.com
 ```
 
 ## Report Format
