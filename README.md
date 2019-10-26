@@ -146,10 +146,14 @@ This allows you to consume the reports in other ways, such as by building a stat
 
 The main documentation so far was about CLI use.
 Typically, building things on top of the reports is possible by reading in the output `report-xyz.json` file.
-For more integrated use cases, however, we also provide a programmatic API.
-It exposes the core run loop, without touching the filesystem.
 
-You can use it via the `runCore` function:
+For more integrated use cases, we also provide a programmatic API.
+It exposes the core run loop, without touching the filesystem.
+This can be useful if you want to send the results to another service, log things out in more detail and so on.
+
+1) `runCore`
+
+You can use the programmatic API via the `runCore` function:
 
 ```js
 import {runCore} from 'accessible-pipeline';
@@ -161,6 +165,33 @@ async function main() {
   });
   // Some time later...
   // Do something with results here
+}
+```
+
+2) `runCoreStreaming`
+
+Another programmatic API is `runCoreStreaming`.
+It returns an [async Iterator](https://2ality.com/2016/10/asynchronous-iteration.html), which yields values of type `CoreStreamingMsg`.
+
+This API is useful if you don't want to wait for all the results to come in (if they all ever do).
+You can process values one-by-one at your own pace.
+
+```js
+import {runCoreStreaming} from 'accessible-pipeline';
+
+async function main() {
+  const url = new URL('https://example.com/');
+
+  for await (const msg of runCoreStreaming(rootURL, opts)) {
+    // You could use this to send items one-by-one to some other service
+    // You could batch them, you could do anything with them here. Be free!
+    if (msg.type === 'result') {
+      console.log(`Got results: ${msg.data}`);
+    }
+    if (msg.type === 'state') {
+      console.log(`Got state: ${msg.data}`);
+    }
+  }
 }
 ```
 

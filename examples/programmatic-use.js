@@ -5,11 +5,12 @@ const {promisify} = require('util');
 const writeFile = promisify(fs.writeFile);
 
 async function main() {
-  const rootURL = new URL('https://worldtour.fiba3x3.com/2018');
+  const rootURL = new URL('https://example.com');
   const opts = {
     pageLimit: 5,
   };
 
+  // Get the results and the state from running the core functions
   const {results, state} = await runCore(rootURL, opts);
 
   await writeFile('report.json', JSON.stringify(results, null, 2), 'utf8');

@@ -47,9 +47,9 @@ export type Options = {
   puppeteerChromeLaunchArgs?: puppeteer.LaunchOptions['args'];
 };
 
-type CoreReturnValue =
+export type CoreStreamingMsg =
   | {type: 'state'; data: StateData}
-  | {type: 'results'; data: AxeResults};
+  | {type: 'result'; data: AxeResults};
 
 type StateData = {
   entry: string;
@@ -83,7 +83,7 @@ export async function runCore(rootURL: URL, opts: Options) {
     if (msg.type === 'state') {
       state = msg.data;
     }
-    if (msg.type === 'results') {
+    if (msg.type === 'result') {
       results.push(msg.data);
     }
   }
@@ -123,7 +123,7 @@ export function runCoreStreaming(rootURL: URL, opts: Options) {
 async function* runCoreStreamingInternal(
   rootURL: URL,
   opts: Options
-): AsyncGenerator<CoreReturnValue> {
+): AsyncGenerator<CoreStreamingMsg> {
   // Merge default options
   opts = {...defaultOpts, ...opts};
 
@@ -238,7 +238,7 @@ async function* runCoreStreamingInternal(
 
         // Append the results to the list
         // Yield the current results to the consumer, tagged so they can separate them
-        yield {type: 'results', data: results};
+        yield {type: 'result', data: results};
 
         // Send a 'GotResults' message on the streaming channel
         streaming.sendGotResults(results, opts.streaming);
