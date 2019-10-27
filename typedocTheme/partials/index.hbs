@@ -18,7 +18,18 @@
 
 {{else}}
 
+{{!--
+  TODO: TypeDoc treats source files as external
+  Haven't found working solution yet, see issues:
+  https://github.com/TypeStrong/typedoc/issues/673
+  https://github.com/TypeStrong/typedoc/issues/903
+  https://github.com/TypeStrong/typedoc/issues/124
+--}}
+{{#ifEquals title "External modules"}}
+{{heading 3}} Files
+{{else}}
 {{heading 3}} {{title}}
+{{/ifEquals}}
 
 {{#each children}}
 * [{{{name}}}]({{relativeURL url}})
