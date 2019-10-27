@@ -15,4 +15,4 @@
   level: LOG_LEVEL,
 })
 
-*Defined in [src/logger.ts:6](https://github.com/ArtemKolichenkov/accessible-pipeline/blob/e65b98b/src/logger.ts#L6)*
+*Defined in [src/logger.ts:6](/src/logger.ts#L6)*

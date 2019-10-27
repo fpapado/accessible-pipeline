@@ -16,7 +16,7 @@
 
 Ƭ **CLIOptions**: *object*
 
-*Defined in [src/report.tsx:300](https://github.com/ArtemKolichenkov/accessible-pipeline/blob/e65b98b/src/report.tsx#L300)*
+*Defined in [src/report.tsx:300](/src/report.tsx#L300)*
 
 #### Type declaration:
 
@@ -26,7 +26,7 @@
 
 ▸ **cliEntry**(`opts`: [CLIOptions](_src_report_.md#clioptions)): *void*
 
-*Defined in [src/report.tsx:306](https://github.com/ArtemKolichenkov/accessible-pipeline/blob/e65b98b/src/report.tsx#L306)*
+*Defined in [src/report.tsx:306](/src/report.tsx#L306)*
 
 **Parameters:**
 

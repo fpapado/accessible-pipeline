@@ -17,7 +17,7 @@
 
 ▸ **runCore**(`rootURL`: URL, `opts`: [Options](../interfaces/_src_core_.options.md)): *Promise‹object›*
 
-*Defined in [src/core.ts:79](https://github.com/ArtemKolichenkov/accessible-pipeline/blob/e65b98b/src/core.ts#L79)*
+*Defined in [src/core.ts:79](/src/core.ts#L79)*
 
 Runs the assertions at the URL with options, and returns them all at once.
 
@@ -41,7 +41,7 @@ ___
 
 ▸ **runCoreStreaming**(`rootURL`: URL, `opts`: [Options](../interfaces/_src_core_.options.md)): *object*
 
-*Defined in [src/core.ts:108](https://github.com/ArtemKolichenkov/accessible-pipeline/blob/e65b98b/src/core.ts#L108)*
+*Defined in [src/core.ts:108](/src/core.ts#L108)*
 
 Runs the assertions at the URL with options, and returns them one-at-a-time,
 as an async iterable.
