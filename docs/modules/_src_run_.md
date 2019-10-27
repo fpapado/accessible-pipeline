@@ -14,9 +14,9 @@
 
 ###  CLIOptions
 
-Ƭ **CLIOptions**: *core.Options & object*
+Ƭ **CLIOptions**: *[Options](../interfaces/_src_core_.options.md) & object*
 
-*Defined in [src/run.ts:38](https://github.com/ArtemKolichenkov/accessible-pipeline/blob/1a8bed9/src/run.ts#L38)*
+*Defined in [src/run.ts:38](https://github.com/ArtemKolichenkov/accessible-pipeline/blob/e65b98b/src/run.ts#L38)*
 
 ## Functions
 
@@ -24,7 +24,7 @@
 
 ▸ **cliEntry**(`rootHref`: string, `opts`: [CLIOptions](_src_run_.md#clioptions)): *void*
 
-*Defined in [src/run.ts:44](https://github.com/ArtemKolichenkov/accessible-pipeline/blob/1a8bed9/src/run.ts#L44)*
+*Defined in [src/run.ts:44](https://github.com/ArtemKolichenkov/accessible-pipeline/blob/e65b98b/src/run.ts#L44)*
 
 **Parameters:**
 

@@ -15,7 +15,7 @@
 
 ▸ **sendGotResults**(`results`: AxeResults, `streaming?`: undefined | false | true): *void*
 
-*Defined in [src/streaming.ts:37](https://github.com/ArtemKolichenkov/accessible-pipeline/blob/1a8bed9/src/streaming.ts#L37)*
+*Defined in [src/streaming.ts:37](https://github.com/ArtemKolichenkov/accessible-pipeline/blob/e65b98b/src/streaming.ts#L37)*
 
 **Parameters:**
 
@@ -32,7 +32,7 @@ ___
 
 ▸ **sendInProgress**(`href`: string, `streaming?`: undefined | false | true): *void*
 
-*Defined in [src/streaming.ts:13](https://github.com/ArtemKolichenkov/accessible-pipeline/blob/1a8bed9/src/streaming.ts#L13)*
+*Defined in [src/streaming.ts:13](https://github.com/ArtemKolichenkov/accessible-pipeline/blob/e65b98b/src/streaming.ts#L13)*
 
 **Parameters:**
 
@@ -49,7 +49,7 @@ ___
 
 ▸ **sendWroteReportFile**(`filename`: string, `streaming?`: undefined | false | true): *void*
 
-*Defined in [src/streaming.ts:19](https://github.com/ArtemKolichenkov/accessible-pipeline/blob/1a8bed9/src/streaming.ts#L19)*
+*Defined in [src/streaming.ts:19](https://github.com/ArtemKolichenkov/accessible-pipeline/blob/e65b98b/src/streaming.ts#L19)*
 
 **Parameters:**
 
@@ -66,7 +66,7 @@ ___
 
 ▸ **sendWroteStateFile**(`filename`: string, `streaming?`: undefined | false | true): *void*
 
-*Defined in [src/streaming.ts:28](https://github.com/ArtemKolichenkov/accessible-pipeline/blob/1a8bed9/src/streaming.ts#L28)*
+*Defined in [src/streaming.ts:28](https://github.com/ArtemKolichenkov/accessible-pipeline/blob/e65b98b/src/streaming.ts#L28)*
 
 **Parameters:**
 

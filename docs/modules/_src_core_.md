@@ -2,32 +2,22 @@
 
 # "src/core"
 
-### Type aliases
+### Interfaces
 
-* [Options](_src_core_.md#options)
+* [Options](../interfaces/_src_core_.options.md)
 
 ### Functions
 
 * [runCore](_src_core_.md#runcore)
 * [runCoreStreaming](_src_core_.md#runcorestreaming)
 
-## Type aliases
-
-###  Options
-
-Ƭ **Options**: *object*
-
-*Defined in [src/core.ts:31](https://github.com/ArtemKolichenkov/accessible-pipeline/blob/1a8bed9/src/core.ts#L31)*
-
-#### Type declaration:
-
 ## Functions
 
 ###  runCore
 
-▸ **runCore**(`rootURL`: URL, `opts`: [Options](_src_core_.md#options)): *Promise‹object›*
+▸ **runCore**(`rootURL`: URL, `opts`: [Options](../interfaces/_src_core_.options.md)): *Promise‹object›*
 
-*Defined in [src/core.ts:77](https://github.com/ArtemKolichenkov/accessible-pipeline/blob/1a8bed9/src/core.ts#L77)*
+*Defined in [src/core.ts:79](https://github.com/ArtemKolichenkov/accessible-pipeline/blob/e65b98b/src/core.ts#L79)*
 
 Runs the assertions at the URL with options, and returns them all at once.
 
@@ -41,7 +31,7 @@ An alternative is runCoreStreaming, which returns results one-at-a-time.
 Name | Type |
 ------ | ------ |
 `rootURL` | URL |
-`opts` | [Options](_src_core_.md#options) |
+`opts` | [Options](../interfaces/_src_core_.options.md) |
 
 **Returns:** *Promise‹object›*
 
@@ -49,9 +39,9 @@ ___
 
 ###  runCoreStreaming
 
-▸ **runCoreStreaming**(`rootURL`: URL, `opts`: [Options](_src_core_.md#options)): *object*
+▸ **runCoreStreaming**(`rootURL`: URL, `opts`: [Options](../interfaces/_src_core_.options.md)): *object*
 
-*Defined in [src/core.ts:106](https://github.com/ArtemKolichenkov/accessible-pipeline/blob/1a8bed9/src/core.ts#L106)*
+*Defined in [src/core.ts:108](https://github.com/ArtemKolichenkov/accessible-pipeline/blob/e65b98b/src/core.ts#L108)*
 
 Runs the assertions at the URL with options, and returns them one-at-a-time,
 as an async iterable.
@@ -71,6 +61,6 @@ An alternative is runCore, which buffers / collects the results instead.
 Name | Type |
 ------ | ------ |
 `rootURL` | URL |
-`opts` | [Options](_src_core_.md#options) |
+`opts` | [Options](../interfaces/_src_core_.options.md) |
 
 **Returns:** *object*
