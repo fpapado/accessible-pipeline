@@ -22,7 +22,8 @@
     "out": "docs",
     "ignoreCompilerErrors": true,
     "readme": "none",
-    "plugin": "typedoc-plugin-markdown"
+    "plugin": "typedoc-plugin-markdown",
+    "theme": "./typedocTheme/",
   },
   "exclude": ["node_modules", "dist", "./types"]
 }
