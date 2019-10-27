@@ -10,6 +10,12 @@ function reflectionTitle() {
         const typeParameters = this.model.typeParameters.map(typeParameter => typeParameter.name).join(', ');
         title.push(`<**${typeParameters}**>`);
     }
+    if (title[0] === "accessible-pipeline") {
+        title[0] = "Type-related documentation"
+    }
+    if (title[0] === "External module:") {
+        title.shift();
+    }
     return title.join(' ');
 }
 exports.reflectionTitle = reflectionTitle;

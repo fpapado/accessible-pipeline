@@ -1,7 +1,5 @@
 {{#if groups}}
 
-{{heading 2}} Index
-
 {{#each groups}}
 
 {{#if categories}}
@@ -26,6 +24,9 @@
   https://github.com/TypeStrong/typedoc/issues/124
 --}}
 {{#ifEquals title "External modules"}}
+This is automatically generated JSDOC/TSDOC documentation using [TypeDoc](https://github.com/TypeStrong/typedoc) and [typedoc-plugin-markdown](https://github.com/tom-grey/typedoc-plugin-markdown).  
+TypeDoc options are set in `typedocOptions` property of `tsconfig.json`'.
+
 {{heading 3}} Files
 {{else}}
 {{heading 3}} {{title}}
