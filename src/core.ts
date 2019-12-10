@@ -45,6 +45,7 @@ export type Options = {
   streaming?: boolean;
   /* List of Chromium flags for Puppeteer launch */
   puppeteerChromeLaunchArgs?: puppeteer.LaunchOptions['args'];
+  onBeforeAssertions?: (page: puppeteer.Page) => Promise<void>;
 };
 
 type CoreReturnValue =
@@ -74,8 +75,11 @@ const defaultOpts: Partial<Options> = {
  *
  * An alternative is runCoreStreaming, which returns results one-at-a-time.
  */
-export async function runCore(rootURL: URL, opts: Options) {
-  let state: StateData | {} = {};
+export async function runCore(
+  rootURL: URL,
+  opts: Options
+): Promise<{state: StateData; results: AxeResults[]}> {
+  let state: StateData = {} as StateData;
   let results: AxeResults[] = [];
 
   // What a syntax!
@@ -216,7 +220,11 @@ async function* runCoreStreamingInternal(
               log.trace(`Attempt ${tryCount} of ${opts.maxRetries}`);
               try {
                 log.trace('Inside try');
-                const processResults = await processPage(browser, pageUrl);
+                const processResults = await processPage(
+                  browser,
+                  pageUrl,
+                  opts.onBeforeAssertions
+                );
                 succeeded = true;
                 return processResults;
               } catch (err) {
@@ -273,7 +281,11 @@ async function* runCoreStreamingInternal(
   }
 }
 
-async function processPage(browser: Browser, pageUrl: URL) {
+async function processPage(
+  browser: Browser,
+  pageUrl: URL,
+  onBeforeAssertions?: (page: puppeteer.Page) => Promise<void>
+) {
   log.trace('Inside processPage');
   const page = await browser.newPage();
   await page.setBypassCSP(true);
@@ -281,6 +293,11 @@ async function processPage(browser: Browser, pageUrl: URL) {
   // Use 'networkidle2' to allow time for http-equiv redirects etc.
   const response = await page.goto(pageUrl.href, {waitUntil: 'networkidle2'});
   log.info(pageUrl.href);
+
+  // Run custom user hook
+  if (onBeforeAssertions) {
+    await onBeforeAssertions(page);
+  }
 
   // Analyse page, get results
   const results = await analysePage(page);
