@@ -1,6 +1,6 @@
 {
   "name": "accessible-pipeline",
-  "version": "0.6.0",
+  "version": "0.7.0",
   "description": "Acessibility checks in CI, made easy",
   "main": "./dist/src/core.js",
   "bin": {
