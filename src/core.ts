@@ -26,24 +26,26 @@ const readFile = promisify(fs.readFile);
 // TODO: Consider AxE reporting verbosity toggle
 // TODO: Ability to set a UA to hide from analytics
 
-// Common options for excluding links to visit
-// For example *.pdf and #heading-link came up often in early iterations
-export type Options = {
-  /* The maximum number of pages to visit */
+/**
+ * Common options for excluding links to visit.
+ * For example *.pdf and #heading-link came up often in early iterations
+ */ 
+export interface Options {
+  /** The maximum number of pages to visit **/
   pageLimit: number;
-  /* The maximum number of retries for a failing page */
+  /** The maximum number of retries for a failing page */
   maxRetries?: number;
-  /* Whether to ignore links of the shape https://example.com#my-id */
+  /** Whether to ignore links of the shape https://example.com#my-id */
   ignoreFragmentLinks?: boolean;
-  /* A list of extensions to ignore, skipping pages */
+  /** A list of extensions to ignore, skipping pages */
   ignoreExtensions?: Array<string>;
-  /* Wheter to ignore links of the shape https://example.com/?a=b */
+  /** Wheter to ignore links of the shape https://example.com/?a=b */
   ignoreQueryParams?: boolean;
-  /* A path to a route manifest file, used to de-duplicate visited pages and routes */
+  /** A path to a route manifest file, used to de-duplicate visited pages and routes */
   routeManifestPath?: string;
-  /* Whether to expose the streaming logging API, used for advanced, "live" reporters */
+  /** Whether to expose the streaming logging API, used for advanced, "live" reporters */
   streaming?: boolean;
-  /* List of Chromium flags for Puppeteer launch */
+  /** List of Chromium flags for Puppeteer launch */
   puppeteerChromeLaunchArgs?: puppeteer.LaunchOptions['args'];
 };
 

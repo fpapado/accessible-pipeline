@@ -1,0 +1,31 @@
+{{#if implementationOf}}
+
+*Implementation of {{#with implementationOf}}{{typeAndParent}}{{/with}}*
+
+{{/if}}
+
+{{#if inheritedFrom}}
+
+*Inherited from {{#with inheritedFrom}}{{{typeAndParent}}}{{/with}}*
+
+{{/if}}
+
+{{#if overwrites}}
+
+*Overrides {{#with overwrites}}{{typeAndParent}}{{/with}}*
+
+{{/if}}
+
+{{#ifSources}}
+
+{{#if sources}}
+
+{{#each sources}}
+
+*Defined in [{{fileName}}:{{line}}](/{{fileName}}#L{{line}})*
+
+{{/each}}
+
+{{/if}}
+
+{{/ifSources}}
